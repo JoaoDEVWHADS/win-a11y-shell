@@ -216,16 +216,9 @@ class SpeechServer(speechserver.SpeechServer):
         language = acss_family.get(speechserver.VoiceFamily.LANG)
         dialect = acss_family.get(speechserver.VoiceFamily.DIALECT)
 
-        if not language:
-            import locale
-            familyLocale, encoding = locale.getdefaultlocale()
-
-            language, dialect = '', ''
-            if familyLocale:
-                localeValues = familyLocale.split('_')
-                language = localeValues[0]
-                if len(localeValues) == 2:
-                    dialect = localeValues[1]
+        if not language or language in ('en', 'en_US', 'C'):
+            language = 'pt'
+            dialect = 'BR'
 
         return language, dialect
 

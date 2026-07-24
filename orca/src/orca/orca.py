@@ -259,7 +259,12 @@ def start():
     debug.printMessage(debug.LEVEL_INFO, msg, True)
 
     debug.printMessage(debug.LEVEL_INFO, 'ORCA: Starting Atspi main event loop', True)
-    Atspi.event_main()
+    while True:
+        try:
+            Atspi.event_main()
+        except Exception as e:
+            debug.printException(debug.LEVEL_SEVERE)
+            time.sleep(1)
 
 def die(exitCode=1):
     pid = os.getpid()
