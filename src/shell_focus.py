@@ -18,15 +18,15 @@ class WindowsFocusController(Gtk.Window):
 
     def __init__(self, speech: SpeechEngine):
         super().__init__()
-        self.set_title("win-a11y-shell")
+        self.set_title("")
         self.speech = speech
         self.systray = SystemTray(speech)
         self.login_window = AccessibleLoginWindow(speech)
         
-        # Override ATK accessible name for the main window to avoid repeating 'Área de Trabalho'
+        # Clear ATK accessible name so Orca does not speak any window title
         atk_win = self.get_accessible()
         if atk_win:
-            atk_win.set_name("win-a11y-shell")
+            atk_win.set_name("")
 
         self.current_region_idx = 0
         self.desktop_items = []

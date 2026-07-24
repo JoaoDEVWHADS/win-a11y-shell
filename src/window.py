@@ -11,7 +11,7 @@ class AccessibleShellWindow(Gtk.Window):
     Forced foreground focus stealing to break out of active terminal windows.
     """
     def __init__(self, speech: SpeechEngine, systray: SystemTray):
-        super().__init__(title="win-a11y-shell")
+        super().__init__(title="")
         self.speech = speech
         self.systray = systray
         

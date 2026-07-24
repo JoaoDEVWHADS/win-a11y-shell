@@ -12,7 +12,7 @@ class AccessibleDesktopWindow(Gtk.Window):
     Lists real user desktop shortcuts and applications in ~/Desktop and /usr/share/applications.
     """
     def __init__(self, speech: SpeechEngine):
-        super().__init__(title="Desktop")
+        super().__init__(title="")
         self.speech = speech
         
         self.set_default_size(800, 500)
