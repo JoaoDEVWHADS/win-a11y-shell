@@ -102,6 +102,56 @@ LANG=pt_BR.UTF-8
 LC_ALL=pt_BR.UTF-8
 EOF
 
+mkdir -p /root/.config/orca
+cat << 'EOF' > /root/.config/orca/user-settings.py
+import orca.settings
+
+orca.settings.enableSpeech = True
+orca.settings.speechServerFactory = "speechdispatcherfactory"
+orca.settings.speechServerInfo = None
+orca.settings.screenReaderKeyBindings = True
+
+# Force Portuguese (pt-br) Voice and Language in Orca
+orca.settings.voices = {
+    'default': {
+        'established': False,
+        'rate': 50,
+        'gain': 10,
+        'pitch': 5,
+        'name': 'pt-br',
+        'lang': 'pt-br'
+    },
+    'uppercase': {
+        'established': False,
+        'average-pitch': 7.0
+    },
+    'hyperlink': {
+        'established': False
+    }
+}
+
+# Terminal Accessibility & Speech Settings for Orca
+orca.settings.enableEchoByCharacter = True
+orca.settings.enableEchoByWord = True
+orca.settings.enableKeyEcho = True
+orca.settings.speakBlankLines = True
+orca.settings.speakMultiCaseStringsAsWords = True
+
+# Support both Desktop (Insert) and Laptop (CapsLock) Orca Modifiers
+orca.settings.orcaModifierKeys = ["Insert", "KP_Insert", "Caps_Lock"]
+
+# Optimal Terminal & Accessibility Settings for Orca
+orca.settings.speakCellCoordinates = False
+orca.settings.speakCellSpan = False
+orca.settings.speakCellHeaders = False
+EOF
+
+if [ -f /etc/speech-dispatcher/speechd.conf ]; then
+    sed -i 's/# AudioOutputMethod "pulse"/AudioOutputMethod "alsa"/' /etc/speech-dispatcher/speechd.conf
+    sed -i 's/AudioOutputMethod "pulse"/AudioOutputMethod "alsa"/' /etc/speech-dispatcher/speechd.conf
+    sed -i 's/# DefaultLanguage "en-US"/DefaultLanguage "pt-BR"/' /etc/speech-dispatcher/speechd.conf
+fi
+
 echo "[5/7] Installing application files and embedded custom Orca..."
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p /opt/win-a11y-shell
