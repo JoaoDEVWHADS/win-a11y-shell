@@ -175,6 +175,9 @@ export QT_ACCESSIBILITY=1
 export NO_AT_BRIDGE=0
 export ACCESSIBILITY_ENABLED=1
 export GNOME_ACCESSIBILITY=1
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export LANGUAGE=pt_BR:pt
 
 # Resolve dynamic path to embedded Orca
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -185,7 +188,14 @@ else
 fi
 
 export PYTHONPATH="$ORCA_DIR:$PYTHONPATH"
-exec python3 -m orca.orca "$@"
+if [ "$1" = "--replace" ] || [ "$1" = "--no-daemon" ]; then
+    exec python3 -m orca.orca "$@"
+else
+    while true; do
+        python3 -m orca.orca --replace "$@"
+        sleep 1
+    done
+fi
 EOF
 chmod +x /usr/local/bin/orca
 cp -f /usr/local/bin/orca /usr/bin/orca 2>/dev/null || true
@@ -198,6 +208,9 @@ export QT_ACCESSIBILITY=1
 export NO_AT_BRIDGE=0
 export ACCESSIBILITY_ENABLED=1
 export GNOME_ACCESSIBILITY=1
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export LANGUAGE=pt_BR:pt
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -d "/opt/win-a11y-shell" ]; then
@@ -207,7 +220,10 @@ else
 fi
 
 export PYTHONPATH="$APP_DIR/orca/src:$PYTHONPATH"
-exec python3 "$APP_DIR/daemon.py" "$@"
+while true; do
+    python3 "$APP_DIR/daemon.py" "$@"
+    sleep 1
+done
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
 
