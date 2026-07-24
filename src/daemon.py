@@ -3,6 +3,7 @@
 win-a11y-shell Real-Time Daemon
 Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
 Key combinations support (Shift+Tab) & smart speech interruption.
+Alt key isolator to prevent unintended speech termination.
 """
 
 import os
@@ -101,21 +102,18 @@ class RealtimeShellDaemon:
                         if event.type == ecodes.EV_KEY:
                             if event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
                                 self.shift_pressed = (event.value in (1, 2))
-                                # Do NOT interrupt speech on pure modifier hold; only interrupt when single key tap occurs without combo
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
                                 self.ctrl_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT):
                                 self.alt_pressed = (event.value in (1, 2))
+                                # Prevent Alt alone from killing active speech audio
                             elif event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                 self.super_pressed = (event.value in (1, 2))
                             
                             elif event.value == 1:
-                                # Process combination key triggers
                                 if self.shift_pressed and event.code == ecodes.KEY_TAB:
-                                    # Shift+Tab: Navigate focus backwards
                                     GLib.idle_add(self.controller.cycle_tab_reverse)
                                 elif event.code == ecodes.KEY_TAB:
-                                    # Tab: Navigate focus forwards
                                     GLib.idle_add(self.controller.cycle_tab)
                                 elif self.super_pressed and event.code == ecodes.KEY_B:
                                     self.trigger_systray()
