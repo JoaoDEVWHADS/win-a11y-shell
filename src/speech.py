@@ -37,6 +37,13 @@ class SpeechEngine:
                     pass
                 self.current_process = None
 
+    def is_orca_running(self):
+        try:
+            res = subprocess.run(["pgrep", "-x", "orca"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return res.returncode == 0
+        except Exception:
+            return False
+
     def speak(self, text: str, widget=None):
         if not text:
             return
@@ -45,6 +52,10 @@ class SpeechEngine:
         clean_text = text.replace('"', '').replace("'", "").strip()
         
         self.interrupt()
+
+        # If Orca is active, let Orca read ATK labels to avoid two overlapping voices
+        if self.is_orca_running():
+            return
 
         try:
             self.speech_queue.put_nowait(clean_text)
