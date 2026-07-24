@@ -1,3 +1,5 @@
+import os
+import glob
 import subprocess
 import gi
 gi.require_version('Gtk', '3.0')
@@ -5,12 +7,11 @@ from gi.repository import Gtk, Gdk, GLib
 
 from speech import SpeechEngine
 from systray import SystemTray
-from sysinfo import get_real_clock, get_real_volume, get_real_network
 
 class WindowsFocusController(Gtk.Window):
     """
     Unified Windows + NVDA Focus Controller.
-    Manages linear Tab cycling between Desktop -> Start Button -> Taskbar -> SysTray.
+    Real user desktop files navigation with Arrow Keys (Left, Right, Up, Down).
     """
     REGIONS = ['desktop', 'start', 'taskbar', 'systray']
 
@@ -20,10 +21,10 @@ class WindowsFocusController(Gtk.Window):
         self.systray = SystemTray(speech)
         
         self.current_region_idx = 0
-        self.desktop_items = [("Área de Trabalho", "folder"), ("FileZilla Client", "filezilla"), ("TeamTalk 5", "teamtalk")]
+        self.desktop_items = []
         self.desktop_idx = 0
 
-        self.set_default_size(750, 480)
+        self.set_default_size(800, 500)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_keep_above(True)
 
@@ -42,7 +43,28 @@ class WindowsFocusController(Gtk.Window):
         self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.box.pack_start(self.listbox, True, True, 0)
 
+        self.reload_real_desktop()
         self.connect("key-press-event", self.on_key_press)
+
+    def reload_real_desktop(self):
+        """Load real files from ~/Desktop and default system apps."""
+        items = []
+        desktop_dir = os.path.expanduser("~/Desktop")
+        if os.path.exists(desktop_dir):
+            for entry in sorted(os.listdir(desktop_dir)):
+                items.append((entry, os.path.join(desktop_dir, entry)))
+
+        # Fallback default shortcuts if desktop is empty
+        if not items:
+            items = [
+                ("Área de Trabalho", "folder"),
+                ("FileZilla Client", "filezilla"),
+                ("TeamTalk 5", "teamtalk"),
+                ("Google Chrome", "google-chrome"),
+                ("Bloco de Notas", "gedit")
+            ]
+
+        self.desktop_items = items
 
     def focus_region(self, region_name: str):
         if region_name in self.REGIONS:
@@ -59,13 +81,15 @@ class WindowsFocusController(Gtk.Window):
             self.listbox.remove(child)
 
         if region == 'desktop':
+            self.reload_real_desktop()
+            total = len(self.desktop_items)
             item_name = self.desktop_items[self.desktop_idx][0]
-            speech_str = f"Desktop  lista  {item_name}"
+            speech_str = f"Desktop  lista\n{item_name}  {self.desktop_idx + 1} de {total}"
             self.label_region.set_text(f"Desktop (Área de Trabalho)")
-            
-            for idx, (name, _) in enumerate(self.desktop_items):
+
+            for idx, (name, _) in enumerate(self.desktop_items, start=1):
                 row = Gtk.ListBoxRow()
-                label = Gtk.Label(label=f"{name}  lista")
+                label = Gtk.Label(label=f"{name}  {idx} de {total}")
                 label.set_xalign(0)
                 row.add(label)
                 self.listbox.add(row)
@@ -80,8 +104,8 @@ class WindowsFocusController(Gtk.Window):
             self.listbox.add(row)
 
         elif region == 'taskbar':
-            speech_str = "TeamTalk 5 - 1 janela em execução  botão"
-            self.label_region.set_text("Barra de Tarefas (Janelas em execução)")
+            speech_str = "TeamTalk 5 - 1 janela em execução  botão  1 de 1"
+            self.label_region.set_text("Barra de Tarefas")
             row = Gtk.ListBoxRow()
             label = Gtk.Label(label=speech_str)
             label.set_xalign(0)
@@ -114,18 +138,25 @@ class WindowsFocusController(Gtk.Window):
         elif key == Gdk.KEY_Escape:
             self.hide()
             return True
-        elif region == 'desktop' and key in (Gdk.KEY_Up, Gdk.KEY_Down):
-            if key == Gdk.KEY_Down:
-                self.desktop_idx = (self.desktop_idx + 1) % len(self.desktop_items)
-            else:
-                self.desktop_idx = (self.desktop_idx - 1) % len(self.desktop_items)
-            item_name = self.desktop_items[self.desktop_idx][0]
-            self.speech.speak(f"{item_name}")
-            return True
+
+        if region == 'desktop':
+            total = len(self.desktop_items)
+            if key in (Gdk.KEY_Right, Gdk.KEY_Down):
+                self.desktop_idx = (self.desktop_idx + 1) % total
+                item_name = self.desktop_items[self.desktop_idx][0]
+                self.speech.speak(f"{item_name}  {self.desktop_idx + 1} de {total}")
+                return True
+            elif key in (Gdk.KEY_Left, Gdk.KEY_Up):
+                self.desktop_idx = (self.desktop_idx - 1) % total
+                item_name = self.desktop_items[self.desktop_idx][0]
+                self.speech.speak(f"{item_name}  {self.desktop_idx + 1} de {total}")
+                return True
+
         elif region == 'systray' and key in (Gdk.KEY_Left, Gdk.KEY_Right):
             if key == Gdk.KEY_Right:
                 self.systray.navigate_right()
             else:
                 self.systray.navigate_left()
             return True
+
         return False
