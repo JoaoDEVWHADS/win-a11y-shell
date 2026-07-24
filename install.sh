@@ -97,7 +97,28 @@ apt-get install -y -qq \
     python3-evdev \
     python3-dasbus \
     python3-setproctitle \
-    gsettings-desktop-schemas
+    gsettings-desktop-schemas \
+    libqt5widgets5 \
+    libqt5gui5 \
+    libqt5core5a \
+    libqt5network5 \
+    libqt5xml5 \
+    libqt5multimedia5 \
+    libqt5multimedia5-plugins \
+    libqt5texttospeech5 \
+    qtspeech5-speechd-plugin \
+    libqt5x11extras5 \
+    qt5-style-plugins \
+    qt5-gtk2-platformtheme \
+    libqaccessibilityclient-qt5-0 \
+    libqt6widgets6 \
+    libqt6gui6 \
+    libqt6core6 \
+    libqt6network6 \
+    libqt6xml6 \
+    libqt6multimedia6 \
+    libqt6texttospeech6 \
+    qt6-speech-speechd-plugin
 
 sed -i 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen 2>/dev/null || true
 locale-gen pt_BR.UTF-8 2>/dev/null || true
