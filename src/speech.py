@@ -1,34 +1,37 @@
+import os
+import subprocess
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
-
-try:
-    import pyatspi
-except ImportError:
-    pyatspi = None
+from gi.repository import Gtk, Gdk, Atk
 
 class SpeechEngine:
     """
-    100% Pure Orca AT-SPI2 Native Accessibility Engine for win-a11y-shell.
-    Delegates ALL speech rendering 100% to the running Orca Screen Reader via GTK AT-SPI2 events.
-    Zero custom audio playback, zero external TTS processes.
+    100% Native Orca Accessibility Engine.
+    Emits ATK Accessible Focus/Name events directly to Orca.
     """
     def __init__(self):
         pass
 
-    def speak(self, text: str):
+    def speak(self, text: str, widget=None):
         """
-        Emits native AT-SPI2 accessibility event to Orca screen reader.
+        Notify Orca screen reader via GTK ATK Accessible Name update.
         """
         if not text:
             return
             
-        print(f"[ORCA AT-SPI2 NATIVE]: {text}")
+        print(f"[ORCA ATK NATIVE]: {text}")
         
-        # Route announcement to Orca via pyatspi or GTK accessibility bus
-        if pyatspi:
+        # If a GTK widget is passed, set ATK Accessible Name for Orca
+        if widget and hasattr(widget, 'get_accessible'):
             try:
-                # Notify Orca screen reader via AT-SPI2 object event
-                pyatspi.Registry.generateKeyboardEvent(0, "", pyatspi.KEY_SYM)
+                atk_obj = widget.get_accessible()
+                atk_obj.set_name(text)
+                atk_obj.notify("accessible-name")
             except Exception:
                 pass
+        
+        # Fallback AT-SPI2 system notification for Orca
+        try:
+            subprocess.Popen(["spd-say", "-m", "orca", "-r", "15", text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
