@@ -37,11 +37,14 @@ class RealtimeShellDaemon:
 
     def launch_terminal(self):
         self.speech.speak("Abrindo Terminal")
-        try:
-            subprocess.Popen(["x-terminal-emulator"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
+        env = os.environ.copy()
+        env["DISPLAY"] = ":0"
+        
+        # Try lxterminal, xterm, or x-terminal-emulator
+        for cmd in [["lxterminal"], ["xterm"], ["x-terminal-emulator"]]:
             try:
-                subprocess.Popen(["xterm"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                break
             except Exception:
                 pass
 
@@ -86,7 +89,6 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
-                            # Modifier keys tracking
                             if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                 self.super_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
@@ -94,7 +96,6 @@ class RealtimeShellDaemon:
                             elif event.code in (ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT):
                                 self.alt_pressed = (event.value in (1, 2))
                             
-                            # Hotkey triggers
                             elif event.value == 1:
                                 if self.super_pressed and event.code == ecodes.KEY_B:
                                     self.trigger_systray()
