@@ -97,6 +97,9 @@ QT_ACCESSIBILITY=1
 NO_AT_BRIDGE=0
 ACCESSIBILITY_ENABLED=1
 GNOME_ACCESSIBILITY=1
+VTE_CJK_WIDTH=1
+LANG=pt_BR.UTF-8
+LC_ALL=pt_BR.UTF-8
 EOF
 
 echo "[5/7] Installing application files and embedded custom Orca..."
