@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 win-a11y-shell Real-Time Daemon
-Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (Terminal)
+Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
 """
 
 import os
@@ -36,12 +36,12 @@ class RealtimeShellDaemon:
         GLib.idle_add(lambda: self.controller.focus_region('systray'))
 
     def launch_terminal(self):
-        self.speech.speak("Abrindo Terminal")
+        self.speech.speak("Abrindo GNOME Terminal")
         env = os.environ.copy()
         env["DISPLAY"] = ":0"
         
-        # Try lxterminal, xterm, or x-terminal-emulator
-        for cmd in [["lxterminal"], ["xterm"], ["x-terminal-emulator"]]:
+        # Primary: gnome-terminal (100% Orca VTE accessible)
+        for cmd in [["gnome-terminal"], ["x-terminal-emulator"], ["lxterminal"], ["xterm"]]:
             try:
                 subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 break
@@ -51,7 +51,7 @@ class RealtimeShellDaemon:
     def start(self):
         print("==================================================")
         print("  win-a11y-shell Daemon Active")
-        print("  Win+B (SysTray) | Win+M (Desktop) | Ctrl+Alt+T (Terminal)")
+        print("  Win+B (SysTray) | Win+M (Desktop) | Ctrl+Alt+T (GNOME Terminal)")
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)

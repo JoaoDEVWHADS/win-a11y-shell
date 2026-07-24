@@ -49,9 +49,10 @@ EOF
 echo "[3/7] Updating package lists..."
 apt-get update -qq
 
-echo "[4/7] Installing Orca, GTK3, DBus, Terminal & Accessibility Packages..."
+echo "[4/7] Installing Orca, GNOME Terminal, GTK3 & Accessibility Packages..."
 apt-get install -y -qq \
     orca \
+    gnome-terminal \
     python3-pyatspi \
     gir1.2-atspi-2.0 \
     dbus-x11 \
@@ -66,8 +67,6 @@ apt-get install -y -qq \
     x11-xserver-utils \
     x11-utils \
     xdotool \
-    lxterminal \
-    xterm \
     nodm \
     python3 \
     python3-pip \
@@ -120,5 +119,5 @@ EOF
 systemctl restart nodm || true
 
 echo "=================================================="
-echo "  INSTALLATION COMPLETE! ORCA & SHELL READY."
+echo "  INSTALLATION COMPLETE! ORCA & GNOME TERMINAL READY."
 echo "=================================================="
