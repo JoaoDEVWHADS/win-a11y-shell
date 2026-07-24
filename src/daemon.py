@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 win-a11y-shell Real-Time Daemon
-Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal), Insert+Space / CapsLock+Space (Orca Preferences GUI)
+Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
+Auto-hides shell window when launching external apps so Orca reads external windows natively.
 """
 
 import os
@@ -30,7 +31,6 @@ class RealtimeShellDaemon:
         self.ctrl_pressed = False
         self.alt_pressed = False
         self.shift_pressed = False
-        self.orca_mod_pressed = False
 
     def trigger_desktop(self):
         GLib.idle_add(lambda: self.controller.focus_region('desktop'))
@@ -40,6 +40,9 @@ class RealtimeShellDaemon:
 
     def launch_terminal(self):
         self.speech.speak("Abrindo GNOME Terminal")
+        # Instantly hide shell window so GNOME Terminal takes 100% front focus
+        GLib.idle_add(self.controller.hide)
+        
         env = os.environ.copy()
         env["DISPLAY"] = ":0"
         
@@ -58,24 +61,10 @@ class RealtimeShellDaemon:
         except Exception:
             pass
 
-    def open_orca_preferences(self):
-        self.speech.speak("Preferências do Orca")
-        # Send Insert+Space via xdotool directly inside DISPLAY :0 to trigger Orca Preferences window safely
-        def trigger_xdotool():
-            subprocess.run(
-                "DISPLAY=:0 xdotool key Insert+space || DISPLAY=:0 xdotool key Caps_Lock+space",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-        import threading
-        threading.Thread(target=trigger_xdotool, daemon=True).start()
-
     def start(self):
         print("==================================================")
         print("  win-a11y-shell Daemon Active")
         print("  Win+B (SysTray) | Win+M (Desktop) | Ctrl+Alt+T (GNOME Terminal)")
-        print("  Insert+Space / CapsLock+Space (Orca Preferences)")
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)
@@ -113,9 +102,7 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
-                            if event.code in (ecodes.KEY_INSERT, ecodes.KEY_CAPSLOCK, ecodes.KEY_KP0):
-                                self.orca_mod_pressed = (event.value in (1, 2))
-                            elif event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
+                            if event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
                                 self.shift_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
                                 self.ctrl_pressed = (event.value in (1, 2))
@@ -125,9 +112,7 @@ class RealtimeShellDaemon:
                                 self.super_pressed = (event.value in (1, 2))
                             
                             elif event.value == 1:
-                                if self.orca_mod_pressed and event.code == ecodes.KEY_SPACE:
-                                    GLib.idle_add(self.open_orca_preferences)
-                                elif self.shift_pressed and event.code == ecodes.KEY_TAB:
+                                if self.shift_pressed and event.code == ecodes.KEY_TAB:
                                     GLib.idle_add(self.controller.cycle_tab_reverse)
                                 elif event.code == ecodes.KEY_TAB:
                                     GLib.idle_add(self.controller.cycle_tab)

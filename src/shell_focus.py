@@ -12,7 +12,7 @@ from login import AccessibleLoginWindow
 class WindowsFocusController(Gtk.Window):
     """
     Unified Windows + NVDA Focus Controller.
-    Clean accessibility labels without win-a11y-shell window title announcement.
+    Clean accessibility labels without forcing keep_above window lock, allowing full Alt+Tab and external window focus.
     """
     REGIONS = ['desktop', 'start', 'taskbar', 'systray']
 
@@ -37,7 +37,9 @@ class WindowsFocusController(Gtk.Window):
 
         self.set_default_size(800, 500)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_keep_above(True)
+
+        # Do NOT force set_keep_above(True) so external windows like Terminal/TeamTalk can take full focus
+        self.set_keep_above(False)
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         self.box.set_margin_top(15)
