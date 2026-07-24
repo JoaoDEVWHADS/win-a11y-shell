@@ -6,28 +6,30 @@
 chown -R lightdm:lightdm /var/lib/lightdm
 chmod -R 755 /var/lib/lightdm
 
-# Copiar Xauthority do root ou permitir conexao local no X11
+# Liberar acesso ao X11
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
 # Executa em background sem bloquear o lightdm
 (
-    sleep 2
-    # Copia o xauth do lightdm se existir
-    AUTH_FILE=$(find /var/run/lightdm -name "*lightdm*" -o -name "*root*" 2>/dev/null | head -1)
+    sleep 1
+    # Focar na janela do greeter para garantir que o teclado funcione
+    XAUTHORITY=/var/run/lightdm/root/:0 DISPLAY=:0 xdotool search --onlyvisible --class "lightdm-gtk-greeter" windowfocus 2>/dev/null || true
     
-    runuser -u lightdm -- env \
-        DISPLAY=:0 \
-        XAUTHORITY="${AUTH_FILE:-/var/run/lightdm/root/:0}" \
-        HOME=/var/lib/lightdm \
-        PYTHONPATH="/opt/win-a11y-shell/orca/src" \
-        LANG=pt_BR.UTF-8 \
-        LC_ALL=pt_BR.UTF-8 \
-        LANGUAGE=pt_BR:pt \
-        GTK_MODULES=gail:atk-bridge \
-        NO_AT_BRIDGE=0 \
-        ACCESSIBILITY_ENABLED=1 \
-        GNOME_ACCESSIBILITY=1 \
-        /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1
+    # Iniciar Orca se nao tiver rodando
+    if ! pgrep -u lightdm -f orca >/dev/null; then
+        runuser -u lightdm -- env \
+            DISPLAY=:0 \
+            HOME=/var/lib/lightdm \
+            PYTHONPATH="/opt/win-a11y-shell/orca/src" \
+            LANG=pt_BR.UTF-8 \
+            LC_ALL=pt_BR.UTF-8 \
+            LANGUAGE=pt_BR:pt \
+            GTK_MODULES=gail:atk-bridge \
+            NO_AT_BRIDGE=0 \
+            ACCESSIBILITY_ENABLED=1 \
+            GNOME_ACCESSIBILITY=1 \
+            /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1
+    fi
 ) &
 
 exit 0
