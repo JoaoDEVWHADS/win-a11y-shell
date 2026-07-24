@@ -4,29 +4,34 @@ import shutil
 
 class SpeechEngine:
     """
-    Speech Engine interface for Debian Accessibility.
-    Uses direct espeak-ng / spd-say with fallback for instant audio output.
+    Deduplicated Single-Voice Speech Engine for win-a11y-shell.
+    Prevents duplicate voices by ensuring a single speech output channel.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
-        self.spd = shutil.which("spd-say")
+        self.current_process = None
 
     def speak(self, text: str):
-        """Announce text via espeak-ng or speech-dispatcher."""
+        """Announce text clearly without duplicate voices."""
+        if not text:
+            return
+            
         print(f"[SPEECH]: {text}")
-        
-        # Clean text for command line
         clean_text = text.replace('"', '').replace("'", "")
         
-        if self.espeak:
+        # Kill previous speech process if still playing to prevent overlap/voice stacking
+        if self.current_process and self.current_process.poll() is None:
             try:
-                subprocess.Popen([self.espeak, "-v", "pt-br", "-s", "170", clean_text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                return
+                self.current_process.terminate()
             except Exception:
                 pass
 
-        if self.spd:
+        if self.espeak:
             try:
-                subprocess.Popen(["spd-say", "-l", "pt-br", "-r", "15", clean_text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                self.current_process = subprocess.Popen(
+                    [self.espeak, "-v", "pt-br", "-s", "170", clean_text],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
             except Exception:
                 pass
