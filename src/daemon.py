@@ -60,6 +60,14 @@ class RealtimeShellDaemon:
     def trigger_terminal(self):
         GLib.idle_add(self._launch_terminal)
 
+    def _alt_tab_switch(self):
+        self.controller.hide()
+        try:
+            subprocess.Popen(["wmctrl", "-k", "off"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(["xdotool", "key", "--clearmodifiers", "Alt+Tab"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
     def _launch_terminal(self):
         self.speech.speak("Abrindo GNOME Terminal")
         self.controller.hide()
@@ -121,6 +129,9 @@ class RealtimeShellDaemon:
                                         elif (self.super_pressed and event.code == ecodes.KEY_O) or (self.ctrl_pressed and self.alt_pressed and event.code == ecodes.KEY_O):
                                             print("[DEBUG Daemon] Atalho detectado: Win+O (Preferências Orca)", flush=True)
                                             subprocess.Popen(["pkill", "-USR1", "-f", "python3 -m orca.orca"])
+                                        elif self.alt_pressed and event.code == ecodes.KEY_TAB:
+                                            print("[DEBUG Daemon] Atalho detectado: Alt+Tab (Switch Window)", flush=True)
+                                            GLib.idle_add(self._alt_tab_switch)
                                         elif event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                             print("[DEBUG Daemon] Atalho detectado: Super (Start Menu)", flush=True)
                                             self.trigger_start()
