@@ -2,8 +2,7 @@
 """
 win-a11y-shell Real-Time Daemon
 Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
-Key combinations support (Shift+Tab).
-Pure speech interruption exclusively on pure Shift key tap without modifier holding.
+Passes Orca Modifier hotkeys (Insert / CapsLock) directly to Orca screen reader.
 """
 
 import os
@@ -32,6 +31,7 @@ class RealtimeShellDaemon:
         self.ctrl_pressed = False
         self.alt_pressed = False
         self.shift_pressed = False
+        self.insert_pressed = False
 
     def trigger_desktop(self):
         GLib.idle_add(lambda: self.controller.focus_region('desktop'))
@@ -61,8 +61,9 @@ class RealtimeShellDaemon:
 
     def start(self):
         print("==================================================")
-        print("  win-a11y-shell Daemon Active")
+        print("  win-a11y-shell Daemon Active (Full Orca Hotkeys Enabled)")
         print("  Win+B (SysTray) | Win+M (Desktop) | Ctrl+Alt+T (GNOME Terminal)")
+        print("  Orca Hotkeys: Insert+S, Insert+Space, Insert+T, CapsLock")
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)
@@ -100,7 +101,11 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
-                            # Update modifier states without calling speech.interrupt()
+                            # Pass-through Orca modifier keys (Insert / CapsLock)
+                            if event.code in (ecodes.KEY_INSERT, ecodes.KEY_CAPSLOCK):
+                                self.insert_pressed = (event.value in (1, 2))
+                                continue
+
                             if event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
                                 self.shift_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
@@ -111,6 +116,10 @@ class RealtimeShellDaemon:
                                 self.super_pressed = (event.value in (1, 2))
                             
                             elif event.value == 1:
+                                # Do NOT intercept hotkeys if Orca Modifier (Insert / CapsLock) is active
+                                if self.insert_pressed:
+                                    continue
+
                                 if self.shift_pressed and event.code == ecodes.KEY_TAB:
                                     GLib.idle_add(self.controller.cycle_tab_reverse)
                                 elif event.code == ecodes.KEY_TAB:
