@@ -341,8 +341,49 @@ class AXUtilitiesRole:
         elif AXUtilitiesRole.is_comment(obj, role):
             role = Atspi.Role.COMMENT
 
+        STRING_ROLE_MAP = {
+            "push button": "botão",
+            "toggle button": "botão de alternância",
+            "radio button": "botão de opção",
+            "check box": "caixa de seleção",
+            "list item": "item de lista",
+            "list": "lista",
+            "frame": "janela",
+            "window": "janela",
+            "dialog": "diálogo",
+            "label": "rótulo",
+            "text": "texto",
+            "entry": "campo de texto",
+            "password text": "senha",
+            "panel": "painel",
+            "menu item": "item de menu",
+            "menu": "menu",
+            "menu bar": "barra de menus",
+            "tool bar": "barra de ferramentas",
+            "status bar": "barra de status",
+            "terminal": "terminal",
+            "application": "aplicativo",
+            "desktop frame": "área de trabalho",
+            "desktop icon": "ícone da área de trabalho",
+            "table": "tabela",
+            "table cell": "célula de tabela",
+            "column header": "cabeçalho de coluna",
+            "row header": "cabeçalho de linha",
+            "combo box": "caixa de combinação",
+            "scroll bar": "barra de rolagem",
+            "page tab": "aba",
+            "page tab list": "lista de abas",
+        }
+
+        if isinstance(role, str):
+            clean_role = role.lower().strip()
+            return STRING_ROLE_MAP.get(clean_role, role)
+
         if not isinstance(role, Atspi.Role):
-            return AXObject.get_role_name(obj, True)
+            res = AXObject.get_role_name(obj, True)
+            if isinstance(res, str):
+                return STRING_ROLE_MAP.get(res.lower().strip(), res)
+            return res
 
         ROLE_NAME_MAP = {
             Atspi.Role.PUSH_BUTTON: "botão",
@@ -382,7 +423,10 @@ class AXUtilitiesRole:
 
         if hasattr(Atspi, "role_get_localized_name"):
             return Atspi.role_get_localized_name(role)
-        return Atspi.role_get_name(role)
+        res = Atspi.role_get_name(role)
+        if isinstance(res, str):
+            return STRING_ROLE_MAP.get(res.lower().strip(), res)
+        return res
 
     @staticmethod
     def have_same_role(obj1, obj2):

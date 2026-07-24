@@ -2795,15 +2795,8 @@ class Script(script.Script):
     ########################################################################
 
     def speak_key_event(self, event):
-        """Method to speak a keyboard event. Scripts should use this method
-        rather than calling speech.speakKeyEvent directly."""
-
-        string = None
-        if event.is_printable_key():
-            string = event.event_string
-
-        voice = self.speech_generator.voice(string=string)
-        speech.speak_key_event(event, voice)
+        """Method to speak a keyboard event. Disabled to silence command key speech."""
+        return
 
     def spell_item(self, string):
         """Speak the characters in the string one by one."""
