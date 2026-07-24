@@ -224,7 +224,10 @@ class WindowsFocusController(Gtk.Window):
                     name, path = self.desktop_items[idx]
                     self.hide()
                     if path != "folder":
-                        subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        if os.access(path, os.X_OK) and (path.endswith('.sh') or os.path.isfile(path)):
+                            subprocess.Popen([path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        else:
+                            subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     return True
             elif region == 'systray':
                 self.systray.activate()
