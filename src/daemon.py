@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 win-a11y-shell Real-Time Daemon
-Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
+Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal with forced X11 Focus)
 """
 
 import os
 import sys
+import time
 import glob
 import subprocess
 import gi
@@ -40,13 +41,21 @@ class RealtimeShellDaemon:
         env = os.environ.copy()
         env["DISPLAY"] = ":0"
         
-        # Primary: gnome-terminal (100% Orca VTE accessible)
-        for cmd in [["gnome-terminal"], ["x-terminal-emulator"], ["lxterminal"], ["xterm"]]:
-            try:
-                subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                break
-            except Exception:
-                pass
+        try:
+            subprocess.Popen(["gnome-terminal"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # Force focus window activation after 0.5s so user can immediately type into shell
+            def force_focus():
+                time.sleep(0.5)
+                subprocess.run(
+                    "xdotool search --onlyvisible --class 'gnome-terminal' windowactivate || xdotool search --onlyvisible --class 'Gnome-terminal' windowactivate",
+                    shell=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            import threading
+            threading.Thread(target=force_focus, daemon=True).start()
+        except Exception:
+            pass
 
     def start(self):
         print("==================================================")
