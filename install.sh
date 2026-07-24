@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# win-a11y-shell Complete Automatic Installer & Audio Fix
+# win-a11y-shell Complete Automated Installer & Orca Integration
 # ==============================================================================
 
 set -e
 
 echo "=================================================="
-echo "  Installing win-a11y-shell (Debian Accessibility)"
+echo "  Installing win-a11y-shell (Complete Orca Debian)"
 echo "=================================================="
 
 if [ "$EUID" -ne 0 ]; then
@@ -14,10 +14,10 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[1/6] Purging audio-locking console services (espeakup)..."
+echo "[1/7] Purging console audio locks (espeakup)..."
 apt-get purge -y espeakup 2>/dev/null || true
 
-echo "[2/6] Configuring ALSA Shared Audio (dmix) in /etc/asound.conf..."
+echo "[2/7] Configuring ALSA Shared Audio (dmix)..."
 cat << 'EOF' > /etc/asound.conf
 pcm.!default {
     type plug
@@ -46,30 +46,34 @@ ctl.!default {
 }
 EOF
 
-echo "[3/6] Installing Xorg minimal display server & Openbox..."
+echo "[3/7] Updating package lists..."
 apt-get update -qq
+
+echo "[4/7] Installing Orca, GTK3, DBus & AT-SPI2 Accessibility Packages..."
 apt-get install -y -qq \
+    orca \
+    python3-pyatspi \
+    gir1.2-atspi-2.0 \
+    dbus-x11 \
+    libglib2.0-bin \
+    speech-dispatcher \
+    python3-speechd \
+    espeak-ng \
+    alsa-utils \
     xserver-xorg-core \
     xinit \
     openbox \
     x11-xserver-utils \
     x11-utils \
     xdotool \
-    nodm
-
-echo "[4/6] Installing GTK3 & Speech dependencies..."
-apt-get install -y -qq \
+    nodm \
     python3 \
     python3-pip \
     python3-gi \
     gir1.2-gtk-3.0 \
-    speech-dispatcher \
-    python3-speechd \
-    espeak-ng \
-    python3-evdev \
-    alsa-utils
+    python3-evdev
 
-echo "[5/6] Installing application files..."
+echo "[5/7] Installing application files to /opt/win-a11y-shell..."
 mkdir -p /opt/win-a11y-shell
 cp -rf src/* /opt/win-a11y-shell/
 
@@ -80,14 +84,27 @@ python3 /opt/win-a11y-shell/daemon.py "$@"
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
 
-echo "[6/6] Configuring autostart (~/.xinitrc & nodm)..."
+echo "[6/7] Configuring X11 Orca autostart (~/.xinitrc)..."
 cat << 'EOF' > /root/.xinitrc
 #!/usr/bin/env bash
+export DISPLAY=:0
+
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+    eval $(dbus-launch --sh-syntax --exit-with-session)
+fi
+
+export GTK_MODULES=gail:atk-bridge
+export QT_ACCESSIBILITY=1
+export NO_AT_BRIDGE=0
+gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
+
 openbox &
+orca --replace &
 python3 /opt/win-a11y-shell/daemon.py
 EOF
 chmod +x /root/.xinitrc
 
+echo "[7/7] Configuring nodm auto-login..."
 cat << 'EOF' > /etc/default/nodm
 NODM_ENABLED=true
 NODM_USER=root
@@ -101,5 +118,5 @@ EOF
 systemctl restart nodm || true
 
 echo "=================================================="
-echo "  INSTALLATION & AUDIO LOCK PREVENTION COMPLETE!"
+echo "  INSTALLATION COMPLETE! ORCA & SHELL READY."
 echo "=================================================="
