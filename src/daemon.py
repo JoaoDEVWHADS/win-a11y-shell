@@ -1,31 +1,54 @@
 #!/usr/bin/env python3
 """
-win-a11y-shell Real-Time Interactive Daemon
-Hooking Linux evdev input devices directly for headless & desktop compatibility.
+win-a11y-shell Real-Time Interactive Daemon + GTK Native Window
 """
 
 import os
 import sys
 import time
 import glob
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, GLib
+
 from speech import SpeechEngine
 from systray import SystemTray
+from window import AccessibleShellWindow
 
 try:
     import evdev
     from evdev import InputDevice, ecodes
 except ImportError:
-    print("[ERROR] 'evdev' library not installed. Install with: apt-get install python3-evdev")
-    sys.exit(1)
+    pass
 
 class RealtimeShellDaemon:
     def __init__(self):
         self.speech = SpeechEngine()
         self.systray = SystemTray(self.speech)
+        self.window = AccessibleShellWindow(self.speech, self.systray)
         self.current_focus = None
         self.super_pressed = False
 
-    def get_keyboard_devices(self):
+    def trigger_systray_window(self):
+        GLib.idle_add(self.window.open_systray_window)
+
+    def start(self):
+        print("==================================================")
+        print("  win-a11y-shell GUI Daemon (GTK Native Active)")
+        print("==================================================")
+        self.speech.speak("Janela win a11y shell iniciada. Pressione Windows B para abrir a janela da bandeja de sistema.")
+
+        # Run GTK Main loop in background thread or main loop
+        GLib.idle_add(self.listen_evdev)
+        Gtk.main()
+
+    def listen_evdev(self):
+        import threading
+        t = threading.Thread(target=self.evdev_loop, daemon=True)
+        t.start()
+        return False
+
+    def evdev_loop(self):
         devices = []
         for path in glob.glob('/dev/input/event*'):
             try:
@@ -37,20 +60,9 @@ class RealtimeShellDaemon:
                         devices.append(dev)
             except (PermissionError, OSError):
                 continue
-        return devices
 
-    def start(self):
-        print("==================================================")
-        print("  win-a11y-shell Daemon (Evdev System Active)")
-        print("==================================================")
-        self.speech.speak("Sistema win a11y shell iniciado em tempo real. Pressione Windows B para a bandeja ou Windows M para a área de trabalho.")
-        
-        devices = self.get_keyboard_devices()
         if not devices:
-            print("[INFO] Daemon running in background system service mode.")
-            # Fallback service loop
-            while True:
-                time.sleep(1)
+            return
 
         import select
         dev_map = {dev.fd: dev for dev in devices}
@@ -62,33 +74,12 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
-                            self.handle_key_event(event)
+                            if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
+                                self.super_pressed = (event.value == 1 or event.value == 2)
+                            elif event.value == 1 and self.super_pressed and event.code == ecodes.KEY_B:
+                                self.trigger_systray_window()
                 except OSError:
                     pass
-
-    def handle_key_event(self, event):
-        # 1 = Press, 0 = Release
-        if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
-            self.super_pressed = (event.value == 1 or event.value == 2)
-            if event.value == 0:  # Win key press alone opens Start Menu
-                pass
-
-        if event.value == 1: # Key press
-            if self.super_pressed and event.code == ecodes.KEY_B:
-                self.current_focus = 'systray'
-                self.systray.focus()
-            elif self.super_pressed and event.code == ecodes.KEY_M:
-                self.current_focus = 'desktop'
-                self.speech.speak("Desktop  lista  FileZilla Client  62 de 105")
-            elif self.current_focus == 'systray':
-                if event.code == ecodes.KEY_RIGHT:
-                    self.systray.navigate_right()
-                elif event.code == ecodes.KEY_LEFT:
-                    self.systray.navigate_left()
-                elif event.code in (ecodes.KEY_ENTER, ecodes.KEY_KPENTER, ecodes.KEY_SPACE):
-                    self.systray.activate()
-                elif event.code == ecodes.KEY_TAB:
-                    self.speech.speak("Iniciar  botão de alternância  não pressionado")
 
 if __name__ == "__main__":
     daemon = RealtimeShellDaemon()
