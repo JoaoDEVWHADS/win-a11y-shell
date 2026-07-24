@@ -202,7 +202,9 @@ else
 fi
 
 export PYTHONPATH="$ORCA_DIR:$PYTHONPATH"
-if [ "$1" = "--replace" ] || [ "$1" = "--no-daemon" ]; then
+if [ "$1" = "-s" ] || [ "$1" = "--setup" ]; then
+    exec python3 -m orca.orca_bin "$@"
+elif [ "$1" = "--replace" ] || [ "$1" = "--no-daemon" ]; then
     exec python3 -m orca.orca "$@"
 else
     while true; do
