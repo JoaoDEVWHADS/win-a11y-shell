@@ -2,8 +2,8 @@
 """
 win-a11y-shell Real-Time Daemon
 Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
-Key combinations support (Shift+Tab) & smart speech interruption.
-Alt key isolator to prevent unintended speech termination.
+Key combinations support (Shift+Tab).
+Pure speech interruption exclusively on pure Shift key tap without modifier holding.
 """
 
 import os
@@ -100,13 +100,13 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
+                            # Update modifier states without calling speech.interrupt()
                             if event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
                                 self.shift_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
                                 self.ctrl_pressed = (event.value in (1, 2))
                             elif event.code in (ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT):
                                 self.alt_pressed = (event.value in (1, 2))
-                                # Prevent Alt alone from killing active speech audio
                             elif event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                 self.super_pressed = (event.value in (1, 2))
                             
