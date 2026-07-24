@@ -1,37 +1,52 @@
 import os
 import subprocess
 import shutil
+import threading
+import queue
 
 class SpeechEngine:
     """
-    Deduplicated Single-Voice Speech Engine for win-a11y-shell.
-    Prevents duplicate voices by ensuring a single speech output channel.
+    Thread-safe Queue-based Speech Engine for win-a11y-shell.
+    Prevents ALSA buffer locks and process defunct zombies.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
-        self.current_process = None
+        self.speech_queue = queue.Queue(maxsize=5)
+        self.worker_thread = threading.Thread(target=self._speech_worker, daemon=True)
+        self.worker_thread.start()
 
     def speak(self, text: str):
-        """Announce text clearly without duplicate voices."""
+        """Enqueue speech item, dropping old stacked items to keep speech instant."""
         if not text:
             return
             
         print(f"[SPEECH]: {text}")
-        clean_text = text.replace('"', '').replace("'", "")
+        clean_text = text.replace('"', '').replace("'", "").strip()
         
-        # Kill previous speech process if still playing to prevent overlap/voice stacking
-        if self.current_process and self.current_process.poll() is None:
+        # Clear backlog if user is navigating fast
+        while not self.speech_queue.empty():
             try:
-                self.current_process.terminate()
-            except Exception:
-                pass
+                self.speech_queue.get_nowait()
+            except queue.Empty:
+                break
 
-        if self.espeak:
-            try:
-                self.current_process = subprocess.Popen(
-                    [self.espeak, "-v", "pt-br", "-s", "170", clean_text],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-            except Exception:
-                pass
+        try:
+            self.speech_queue.put_nowait(clean_text)
+        except queue.Full:
+            pass
+
+    def _speech_worker(self):
+        while True:
+            text = self.speech_queue.get()
+            if self.espeak and text:
+                try:
+                    # Execute espeak-ng with timeout to prevent zombie process locks
+                    subprocess.run(
+                        [self.espeak, "-v", "pt-br", "-s", "170", text],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=4
+                    )
+                except (subprocess.TimeoutExpired, Exception):
+                    pass
+            self.speech_queue.task_done()
