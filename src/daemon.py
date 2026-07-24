@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-win-a11y-shell Real-Time Interactive Daemon + GTK Native Window
+win-a11y-shell Real-Time Daemon with SysTray & Desktop Window Integration
 """
 
 import os
@@ -14,6 +14,7 @@ from gi.repository import Gtk, Gdk, GLib
 from speech import SpeechEngine
 from systray import SystemTray
 from window import AccessibleShellWindow
+from desktop import AccessibleDesktopWindow
 
 try:
     import evdev
@@ -25,20 +26,21 @@ class RealtimeShellDaemon:
     def __init__(self):
         self.speech = SpeechEngine()
         self.systray = SystemTray(self.speech)
-        self.window = AccessibleShellWindow(self.speech, self.systray)
-        self.current_focus = None
+        self.systray_window = AccessibleShellWindow(self.speech, self.systray)
+        self.desktop_window = AccessibleDesktopWindow(self.speech)
         self.super_pressed = False
 
     def trigger_systray_window(self):
-        GLib.idle_add(self.window.open_systray_window)
+        GLib.idle_add(self.systray_window.open_systray_window)
+
+    def trigger_desktop_window(self):
+        GLib.idle_add(self.desktop_window.open_desktop_window)
 
     def start(self):
         print("==================================================")
-        print("  win-a11y-shell GUI Daemon (GTK Native Active)")
+        print("  win-a11y-shell Daemon (Win+B / Win+M / Win+D Active)")
         print("==================================================")
-        self.speech.speak("Janela win a11y shell iniciada. Pressione Windows B para abrir a janela da bandeja de sistema.")
 
-        # Run GTK Main loop in background thread or main loop
         GLib.idle_add(self.listen_evdev)
         Gtk.main()
 
@@ -76,8 +78,11 @@ class RealtimeShellDaemon:
                         if event.type == ecodes.EV_KEY:
                             if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                 self.super_pressed = (event.value == 1 or event.value == 2)
-                            elif event.value == 1 and self.super_pressed and event.code == ecodes.KEY_B:
-                                self.trigger_systray_window()
+                            elif event.value == 1 and self.super_pressed:
+                                if event.code == ecodes.KEY_B:
+                                    self.trigger_systray_window()
+                                elif event.code in (ecodes.KEY_M, ecodes.KEY_D):
+                                    self.trigger_desktop_window()
                 except OSError:
                     pass
 
