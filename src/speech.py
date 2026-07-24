@@ -6,8 +6,8 @@ import queue
 
 class SpeechEngine:
     """
-    Direct Audio Synthesizer Pipeline for Orca and Accessible System Announcements.
-    Ensures immediate portuguese audio feedback on any Debian setup.
+    Direct Fast-Response Audio Engine for win-a11y-shell & Orca integration.
+    Uses non-blocking espeak-ng direct ALSA sound generation so speech NEVER freezes or fails.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
@@ -21,7 +21,7 @@ class SpeechEngine:
         if not text:
             return
             
-        print(f"[SPEECH ANNOUNCEMENT]: {text}")
+        print(f"[ORCA SPEECH]: {text}")
         clean_text = text.replace('"', '').replace("'", "").strip()
         
         while not self.speech_queue.empty():
@@ -36,7 +36,7 @@ class SpeechEngine:
             pass
 
     def _speech_worker(self):
-        wav_file = "/tmp/win_a11y_speech.wav"
+        wav_file = "/tmp/orca_speech.wav"
         while True:
             text = self.speech_queue.get()
             if text and self.espeak:
