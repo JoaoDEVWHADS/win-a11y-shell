@@ -14,8 +14,21 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[1/7] Purging console audio locks (espeakup)..."
+echo "[1/7] Purging console audio locks (espeakup) & configuring input permissions..."
 apt-get purge -y espeakup 2>/dev/null || true
+
+# Garantir permissoes de leitura nos dispositivos evdev (/dev/input) para todos os usuarios no grupo input
+cat << 'EOF' > /etc/udev/rules.d/99-input-permissions.rules
+KERNEL=="event*", NAME="input/%k", MODE="0660", GROUP="input"
+EOF
+udevadm control --reload-rules 2>/dev/null || true
+udevadm trigger 2>/dev/null || true
+
+# Adicionar todos os usuarios com UID >= 1000 ao grupo input
+for u in $(getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {print $1}'); do
+    usermod -aG input "$u" 2>/dev/null || true
+done
+
 
 echo "[2/7] Configuring ALSA Shared Audio (dmix)..."
 cat << 'EOF' > /etc/asound.conf
