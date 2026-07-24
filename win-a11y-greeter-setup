@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
-# /usr/local/bin/win-a11y-greeter-setup
-# Executado pelo lightdm como ROOT antes do greeter aparecer
+# win-a11y-greeter-setup — Executado pelo lightdm como ROOT antes do greeter aparecer
 
-# Ajustar permissoes de toda a pasta do usuário lightdm
-chown -R lightdm:lightdm /var/lib/lightdm
-chmod -R 755 /var/lib/lightdm
+# Ajustar permissoes da pasta do usuario lightdm
+chown -R lightdm:lightdm /var/lib/lightdm 2>/dev/null || true
+chmod -R 755 /var/lib/lightdm 2>/dev/null || true
 
-# Liberar acesso ao X11
+# Liberar acesso X11 para o usuario lightdm
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
-# Executa ajuste de foco sem iniciar um Orca duplicado (o lightdm-gtk-greeter ja inicia o Orca via a11y-states=+reader)
+# Iniciar o Orca explicitamente sob o usuario lightdm se nao estiver rodando
 (
+    sleep 2
+    if ! pgrep -u lightdm -f orca >/dev/null 2>&1; then
+        runuser -u lightdm -- env \
+            DISPLAY=:0 \
+            HOME=/var/lib/lightdm \
+            PYTHONPATH="/opt/win-a11y-shell/orca/src" \
+            LANG=pt_BR.UTF-8 \
+            LC_ALL=pt_BR.UTF-8 \
+            LANGUAGE=pt_BR:pt \
+            GTK_MODULES=gail:atk-bridge \
+            NO_AT_BRIDGE=0 \
+            ACCESSIBILITY_ENABLED=1 \
+            GNOME_ACCESSIBILITY=1 \
+            /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1 &
+    fi
+
+    # Focar na janela do greeter para garantir resposta do teclado
     sleep 1
     XAUTHORITY=/var/run/lightdm/root/:0 DISPLAY=:0 xdotool search --onlyvisible --class "lightdm-gtk-greeter" windowfocus 2>/dev/null || true
 ) &
