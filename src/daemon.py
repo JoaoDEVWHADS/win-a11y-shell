@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 win-a11y-shell Real-Time Daemon
-Unified Windows Focus Navigation (Desktop -> Start -> Taskbar -> SysTray via Tab)
+Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (Terminal)
 """
 
 import os
 import sys
 import glob
+import subprocess
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
@@ -25,6 +26,8 @@ class RealtimeShellDaemon:
         self.speech = SpeechEngine()
         self.controller = WindowsFocusController(self.speech)
         self.super_pressed = False
+        self.ctrl_pressed = False
+        self.alt_pressed = False
 
     def trigger_desktop(self):
         GLib.idle_add(lambda: self.controller.focus_region('desktop'))
@@ -32,9 +35,20 @@ class RealtimeShellDaemon:
     def trigger_systray(self):
         GLib.idle_add(lambda: self.controller.focus_region('systray'))
 
+    def launch_terminal(self):
+        self.speech.speak("Abrindo Terminal")
+        try:
+            subprocess.Popen(["x-terminal-emulator"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            try:
+                subprocess.Popen(["xterm"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+
     def start(self):
         print("==================================================")
-        print("  win-a11y-shell Daemon (Unified Windows Active)")
+        print("  win-a11y-shell Daemon Active")
+        print("  Win+B (SysTray) | Win+M (Desktop) | Ctrl+Alt+T (Terminal)")
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)
@@ -72,13 +86,22 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
+                            # Modifier keys tracking
                             if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
-                                self.super_pressed = (event.value == 1 or event.value == 2)
-                            elif event.value == 1 and self.super_pressed:
-                                if event.code == ecodes.KEY_B:
+                                self.super_pressed = (event.value in (1, 2))
+                            elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
+                                self.ctrl_pressed = (event.value in (1, 2))
+                            elif event.code in (ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT):
+                                self.alt_pressed = (event.value in (1, 2))
+                            
+                            # Hotkey triggers
+                            elif event.value == 1:
+                                if self.super_pressed and event.code == ecodes.KEY_B:
                                     self.trigger_systray()
-                                elif event.code in (ecodes.KEY_M, ecodes.KEY_D):
+                                elif self.super_pressed and event.code in (ecodes.KEY_M, ecodes.KEY_D):
                                     self.trigger_desktop()
+                                elif self.ctrl_pressed and self.alt_pressed and event.code == ecodes.KEY_T:
+                                    GLib.idle_add(self.launch_terminal)
                 except OSError:
                     pass
 
