@@ -68,6 +68,7 @@ class RealtimeShellDaemon:
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)
+        GLib.idle_add(self.controller.login_window.open_login)
         Gtk.main()
 
     def listen_evdev(self):
