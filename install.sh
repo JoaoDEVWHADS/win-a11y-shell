@@ -105,7 +105,7 @@ gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || 
 
 openbox &
 orca --replace &
-python3 /opt/win-a11y-shell/daemon.py
+exec python3 /opt/win-a11y-shell/daemon.py
 EOF
 chmod +x /root/.xinitrc
 
