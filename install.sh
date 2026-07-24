@@ -137,10 +137,14 @@ orca.settings.voices = {
     }
 }
 
-# Terminal Accessibility & Speech Settings for Orca
-orca.settings.enableEchoByCharacter = True
-orca.settings.enableEchoByWord = True
-orca.settings.enableKeyEcho = True
+# Disable Key Echo for Modifier & Action Keys (Control, Alt, Shift, Tab, etc.)
+orca.settings.enableKeyEcho = False
+orca.settings.enableModifierKeys = False
+orca.settings.enableFunctionKeys = False
+orca.settings.enableActionKeys = False
+orca.settings.enableNavigationKeys = False
+orca.settings.enableEchoByCharacter = False
+orca.settings.enableEchoByWord = False
 orca.settings.speakBlankLines = True
 orca.settings.speakMultiCaseStringsAsWords = True
 
