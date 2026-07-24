@@ -332,8 +332,6 @@ EOF
 
 cat << 'EOF' > /etc/lightdm/lightdm-gtk-greeter.conf
 [greeter]
-a11y-states=+reader
-reader=orca
 indicators=~host;~spacer;~clock;~power;~a11y
 active-monitor=0
 EOF
