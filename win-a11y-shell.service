@@ -1,0 +1,16 @@
+[Unit]
+Description=win-a11y-shell Accessible Windows-like Desktop Shell
+After=network.target sound.target
+
+[Service]
+Type=simple
+Environment="PYTHONPATH=/usr/local/lib/python3.11/dist-packages"
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/root/.Xauthority"
+ExecStart=/usr/bin/python3 /opt/win-a11y-shell/daemon.py
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=default.target
