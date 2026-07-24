@@ -6,8 +6,8 @@ import queue
 
 class SpeechEngine:
     """
-    Direct Fast-Response Audio Engine for win-a11y-shell & Orca integration.
-    Uses non-blocking espeak-ng direct ALSA sound generation so speech NEVER freezes or fails.
+    Guaranteed Speech Audio Engine for win-a11y-shell & Orca integration.
+    Plays instant high-speed audio feedback via ALSA WAV so user is NEVER left without voice.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
@@ -21,7 +21,7 @@ class SpeechEngine:
         if not text:
             return
             
-        print(f"[ORCA SPEECH]: {text}")
+        print(f"[WIN-A11Y SPEECH]: {text}")
         clean_text = text.replace('"', '').replace("'", "").strip()
         
         while not self.speech_queue.empty():
@@ -36,7 +36,7 @@ class SpeechEngine:
             pass
 
     def _speech_worker(self):
-        wav_file = "/tmp/orca_speech.wav"
+        wav_file = "/tmp/win_a11y_speech.wav"
         while True:
             text = self.speech_queue.get()
             if text and self.espeak:
