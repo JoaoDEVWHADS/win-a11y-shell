@@ -2266,10 +2266,10 @@ SPOKEN_ELLIPSIS = _(" dot dot dot")
 SPREADSHEET_NOT_IN_A = _("Not in a spreadsheet.")
 
 # Translators: This message is presented to the user when Orca is launched.
-START_ORCA = _("Screen reader on.")
+START_ORCA = "Leitor de tela ativado."
 
 # Translators: This message is presented to the user when Orca is quit.
-STOP_ORCA = _("Screen reader off.")
+STOP_ORCA = "Leitor de tela desativado."
 
 # Translators: This message means speech synthesis is not installed or working.
 SPEECH_UNAVAILABLE = _("Speech is unavailable.")

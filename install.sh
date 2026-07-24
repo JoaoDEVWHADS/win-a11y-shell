@@ -56,6 +56,8 @@ apt-get update -qq
 
 echo "[4/7] Installing Orca, GNOME Terminal, GTK3 & Accessibility Packages..."
 apt-get install -y -qq \
+    locales \
+    gettext \
     orca \
     gnome-terminal \
     python3-pyatspi \
@@ -63,6 +65,7 @@ apt-get install -y -qq \
     dbus-x11 \
     libglib2.0-bin \
     speech-dispatcher \
+    speech-dispatcher-audio-plugins \
     python3-speechd \
     espeak-ng \
     alsa-utils \
@@ -89,6 +92,10 @@ apt-get install -y -qq \
     python3-dasbus \
     python3-setproctitle \
     gsettings-desktop-schemas
+
+sed -i 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen 2>/dev/null || true
+locale-gen pt_BR.UTF-8 2>/dev/null || true
+update-locale LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8 2>/dev/null || true
 
 cat << 'EOF' > /etc/environment
 DISPLAY=:0

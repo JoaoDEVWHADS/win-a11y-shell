@@ -29,6 +29,19 @@ __copyright__ = "Copyright (c) 2004-2009 Sun Microsystems Inc." \
                 "Copyright (c) 2012 Igalia, S.L."
 __license__   = "LGPL"
 
+import os
+import sys
+import locale
+
+os.environ['LANG'] = 'pt_BR.UTF-8'
+os.environ['LC_ALL'] = 'pt_BR.UTF-8'
+os.environ['LANGUAGE'] = 'pt_BR:pt'
+
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except Exception:
+    pass
+
 import faulthandler
 import gi
 import os
