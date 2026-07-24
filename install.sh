@@ -75,15 +75,8 @@ apt-get install -y -qq \
     x11-xserver-utils \
     x11-utils \
     xdotool \
-    xdotool \
     wmctrl \
-    nodm \
-    python3 \
-    python3-pip \
-    python3-gi \
-    xdotool \
-    wmctrl \
-    nodm \
+    lightdm \
     python3 \
     python3-pip \
     python3-gi \
@@ -109,58 +102,10 @@ LANG=pt_BR.UTF-8
 LC_ALL=pt_BR.UTF-8
 EOF
 
-mkdir -p /root/.config/orca
-cat << 'EOF' > /root/.config/orca/user-settings.py
-import orca.settings
+# Orca config will be written per-user at session start (see session script below)
 
-orca.settings.enableSpeech = True
-orca.settings.speechServerFactory = "speechdispatcherfactory"
-orca.settings.speechServerInfo = None
-orca.settings.screenReaderKeyBindings = True
+# (Orca user-settings.py is written dynamically at session start for any user)
 
-# Force Portuguese (pt-br) Voice and Language in Orca
-orca.settings.voices = {
-    'default': {
-        'established': False,
-        'rate': 50,
-        'gain': 10,
-        'pitch': 5,
-        'name': 'pt-br',
-        'lang': 'pt-br'
-    },
-    'uppercase': {
-        'established': False,
-        'average-pitch': 7.0
-    },
-    'hyperlink': {
-        'established': False
-    }
-}
-
-# Enable Character & Number Echo while Typing
-orca.settings.enableKeyEcho = True
-orca.settings.enableAlphabeticKeys = True
-orca.settings.enableNumericKeys = True
-orca.settings.enablePunctuationKeys = True
-orca.settings.enableSpace = True
-orca.settings.enableEchoByCharacter = True
-
-# Disable Modifier & Action Key Echo (Control, Alt, Shift, Tab, etc.)
-orca.settings.enableModifierKeys = False
-orca.settings.enableFunctionKeys = False
-orca.settings.enableActionKeys = False
-orca.settings.enableNavigationKeys = False
-orca.settings.speakBlankLines = True
-orca.settings.speakMultiCaseStringsAsWords = True
-
-# Support both Desktop (Insert) and Laptop (CapsLock) Orca Modifiers
-orca.settings.orcaModifierKeys = ["Insert", "KP_Insert", "Caps_Lock"]
-
-# Optimal Terminal & Accessibility Settings for Orca
-orca.settings.speakCellCoordinates = False
-orca.settings.speakCellSpan = False
-orca.settings.speakCellHeaders = False
-EOF
 
 if [ -f /etc/speech-dispatcher/speechd.conf ]; then
     sed -i 's/# AudioOutputMethod "pulse"/AudioOutputMethod "alsa"/' /etc/speech-dispatcher/speechd.conf
@@ -248,43 +193,101 @@ done
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
 
-echo "[6/7] Configuring X11 Orca autostart (~/.xinitrc)..."
-cat << 'EOF' > /root/.xinitrc
+echo "[6/7] Registrando win-a11y-shell como sessão X (xsessions)..."
+
+# Session script — roda como o usuário que logou (qualquer um, não root)
+cat << 'ENDSESSION' > /usr/local/bin/win-a11y-shell-session
 #!/usr/bin/env bash
-export DISPLAY=:0
+# win-a11y-shell X session — started by lightdm after user login
+# $HOME, $USER, $XDG_RUNTIME_DIR are already set correctly by lightdm/PAM
 
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval $(dbus-launch --sh-syntax --exit-with-session)
-fi
-
+export DISPLAY="${DISPLAY:-:0}"
 export GTK_MODULES=gail:atk-bridge
 export QT_ACCESSIBILITY=1
 export NO_AT_BRIDGE=0
 export ACCESSIBILITY_ENABLED=1
 export GNOME_ACCESSIBILITY=1
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export LANGUAGE=pt_BR:pt
+export PYTHONPATH="/opt/win-a11y-shell/orca/src:$PYTHONPATH"
 
-gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
-gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+    eval $(dbus-launch --sh-syntax --exit-with-session)
+fi
+
+# Write Orca config to the real user's home (not /root)
+ORCA_CFG="$HOME/.config/orca"
+mkdir -p "$ORCA_CFG"
+cat << 'ORCACFG' > "$ORCA_CFG/user-settings.py"
+import orca.settings
+orca.settings.enableSpeech = True
+orca.settings.speechServerFactory = "speechdispatcherfactory"
+orca.settings.speechServerInfo = None
+orca.settings.screenReaderKeyBindings = True
+orca.settings.voices = {
+    'default': {'established': False, 'rate': 50, 'gain': 10, 'pitch': 5, 'name': 'pt-br', 'lang': 'pt-br'},
+    'uppercase': {'established': False, 'average-pitch': 7.0},
+    'hyperlink': {'established': False}
+}
+orca.settings.enableKeyEcho = True
+orca.settings.enableAlphabeticKeys = True
+orca.settings.enableNumericKeys = True
+orca.settings.enablePunctuationKeys = True
+orca.settings.enableSpace = True
+orca.settings.enableEchoByCharacter = True
+orca.settings.enableModifierKeys = False
+orca.settings.enableFunctionKeys = False
+orca.settings.enableActionKeys = False
+orca.settings.enableNavigationKeys = False
+orca.settings.speakBlankLines = True
+orca.settings.speakMultiCaseStringsAsWords = True
+orca.settings.orcaModifierKeys = ["Insert", "KP_Insert", "Caps_Lock"]
+orca.settings.speakCellCoordinates = False
+orca.settings.speakCellSpan = False
+orca.settings.speakCellHeaders = False
+ORCACFG
+
+gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || true
+gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true 2>/dev/null || true
 
 openbox &
 /usr/local/bin/orca --replace &
 exec /usr/local/bin/win-a11y-shell
-EOF
-chmod +x /root/.xinitrc
+ENDSESSION
+chmod +x /usr/local/bin/win-a11y-shell-session
 
-echo "[7/7] Configuring nodm auto-login..."
-cat << 'EOF' > /etc/default/nodm
-NODM_ENABLED=true
-NODM_USER=root
-NODM_XSESSION=/root/.xinitrc
-NODM_XUNSESSION=/etc/X11/Xsession
-NODM_XSESSION_OLD=/root/.xinitrc
-NODM_PATH=/usr/bin:/bin
-NODM_MIN_SESSION_TIME=60
+# Register as an X session so lightdm shows it in the session list
+mkdir -p /usr/share/xsessions
+cat << 'EOF' > /usr/share/xsessions/win-a11y-shell.desktop
+[Desktop Entry]
+Name=win-a11y-shell
+Comment=Accessible Windows-like Shell with Orca
+Exec=/usr/local/bin/win-a11y-shell-session
+Type=Application
 EOF
 
-systemctl restart nodm || true
+echo "[7/7] Configurando lightdm como display manager padrão..."
+# Desabilitar nodm se estiver instalado
+systemctl disable nodm 2>/dev/null || true
+systemctl stop nodm 2>/dev/null || true
+
+# Configurar lightdm para usar win-a11y-shell como sessão padrão
+mkdir -p /etc/lightdm
+cat << 'EOF' > /etc/lightdm/lightdm.conf
+[Seat:*]
+user-session=win-a11y-shell
+greeter-session=lightdm-gtk-greeter
+EOF
+
+# Habilitar e iniciar lightdm
+systemctl enable lightdm 2>/dev/null || true
+systemctl set-default graphical.target 2>/dev/null || true
 
 echo "=================================================="
-echo "  INSTALLATION COMPLETE! ORCA & GNOME TERMINAL READY."
+echo "  INSTALLATION COMPLETE!"
+echo "  Display Manager: lightdm (tela de login real)"
+echo "  Sessão: win-a11y-shell (qualquer usuário do sistema)"
+echo "  Orca: configurado automaticamente ao logar"
+echo "  Reinicie o sistema para ativar: reboot"
 echo "=================================================="
