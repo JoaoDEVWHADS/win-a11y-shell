@@ -7,13 +7,26 @@ import queue
 class SpeechEngine:
     """
     Ultra-Robust Sound Synthesizer Engine for Linux Debian.
-    Uses non-blocking shell subprocesses to avoid ALSA driver locks.
+    Automatically resets ALSA audio hardware & unmutes channels on startup.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
         self.speech_queue = queue.Queue(maxsize=3)
+        
+        # Auto-reset audio hardware on startup
+        self.init_audio_hardware()
+
         self.worker_thread = threading.Thread(target=self._speech_worker, daemon=True)
         self.worker_thread.start()
+
+    def init_audio_hardware(self):
+        """Automatic audio hardware reset & unmute procedure on daemon startup."""
+        try:
+            subprocess.run(["amixer", "set", "Master", "100%", "unmute"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["amixer", "set", "PCM", "100%", "unmute"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["alsactl", "restore"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
     def speak(self, text: str):
         if not text:
@@ -38,7 +51,6 @@ class SpeechEngine:
             text = self.speech_queue.get()
             if self.espeak and text:
                 try:
-                    # Run espeak-ng through shell command with timeout
                     cmd = f'espeak-ng -v pt-br -s 175 "{text}" >/dev/null 2>&1'
                     subprocess.run(cmd, shell=True, timeout=3)
                 except Exception:
