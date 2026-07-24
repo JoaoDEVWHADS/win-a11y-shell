@@ -6,12 +6,13 @@ from gi.repository import Gtk, Gdk, GLib
 
 from speech import SpeechEngine
 from systray import SystemTray
-from taskbar import get_running_windows
+from taskbar import get_running_windows, activate_window
+from login import AccessibleLoginWindow
 
 class WindowsFocusController(Gtk.Window):
     """
     Unified Windows + NVDA Focus Controller.
-    Dynamic real user Desktop files + Dynamic REAL open Linux windows taskbar.
+    Supports real desktop files, open Linux window switching (Alt+Tab / Taskbar), and Accessible Login.
     """
     REGIONS = ['desktop', 'start', 'taskbar', 'systray']
 
@@ -19,6 +20,7 @@ class WindowsFocusController(Gtk.Window):
         super().__init__(title="win-a11y-shell")
         self.speech = speech
         self.systray = SystemTray(speech)
+        self.login_window = AccessibleLoginWindow(speech)
         
         self.current_region_idx = 0
         self.desktop_items = []
@@ -142,6 +144,12 @@ class WindowsFocusController(Gtk.Window):
         elif key == Gdk.KEY_Escape:
             self.hide()
             return True
+        elif key == Gdk.KEY_Return or key == Gdk.KEY_KP_Enter:
+            if region == 'taskbar' and self.taskbar_items:
+                wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
+                self.hide()
+                activate_window(wid)
+                return True
 
         if region == 'desktop':
             total = len(self.desktop_items)

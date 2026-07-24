@@ -2,7 +2,7 @@ import subprocess
 
 def get_running_windows():
     """
-    Fetch REAL open X11 windows in Linux using xdotool / wmctrl.
+    Fetch REAL open X11 windows in Linux using xdotool.
     """
     windows = []
     try:
@@ -24,3 +24,13 @@ def get_running_windows():
         windows.append(("0", "Nenhuma janela em execução", 1, 1))
 
     return windows
+
+def activate_window(wid: str):
+    """
+    Switch focus directly to selected Linux window.
+    """
+    if wid and wid != "0":
+        try:
+            subprocess.run(["xdotool", "windowactivate", wid], check=False)
+        except Exception:
+            pass
