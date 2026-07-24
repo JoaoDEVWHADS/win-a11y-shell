@@ -267,7 +267,6 @@ gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
 gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
 
 openbox &
-spd-say "Leitor de tela ativado" 2>/dev/null || true
 /usr/local/bin/orca --replace &
 exec /usr/local/bin/win-a11y-shell
 EOF
