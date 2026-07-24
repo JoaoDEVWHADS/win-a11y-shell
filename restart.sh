@@ -62,13 +62,14 @@ echo "[restart] Parando systemd service..."
 systemctl stop win-a11y-shell 2>/dev/null || true
 
 echo "[restart] Matando daemon.py..."
-pkill -9 -f "python3 /opt/win-a11y-shell/daemon.py" 2>/dev/null || true
+pkill -9 -f "daemon.py" 2>/dev/null || true
+pkill -9 -f "win-a11y-shell" --ignore-ancestors 2>/dev/null || true
 
 echo "[restart] Matando Orca..."
-pkill -9 -f "orca.orca" 2>/dev/null || true
+pkill -9 -f "orca" 2>/dev/null || true
 
 echo "[restart] Limpando lock file..."
-rm -f /tmp/win_a11y_shell.lock
+rm -f /tmp/win_a11y_shell.lock 2>/dev/null || true
 
 echo "[restart] Aguardando processos morrerem..."
 sleep 2
