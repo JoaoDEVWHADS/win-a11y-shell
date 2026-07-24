@@ -17,6 +17,16 @@ from gi.repository import Gtk, Gdk, GLib
 from speech import SpeechEngine
 from shell_focus import WindowsFocusController
 
+import fcntl
+
+# Enforce single instance daemon using file lock
+try:
+    lock_file = open('/tmp/win_a11y_shell.lock', 'w')
+    fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except Exception:
+    print("[ERROR] Another instance of win-a11y-shell daemon is already running. Exiting.")
+    sys.exit(0)
+
 try:
     import evdev
     from evdev import InputDevice, ecodes

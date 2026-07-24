@@ -163,6 +163,11 @@ class WindowsFocusController(Gtk.Window):
 
         self.show_all()
         self.present()
+        try:
+            wid = hex(self.get_window().get_xid())
+            subprocess.Popen(["xdotool", "windowactivate", "--sync", wid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
         target_idx = 0
         if region == 'desktop':
