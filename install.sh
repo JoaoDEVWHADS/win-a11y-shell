@@ -49,7 +49,7 @@ EOF
 echo "[3/7] Updating package lists..."
 apt-get update -qq
 
-echo "[4/7] Installing Orca, GTK3, DBus & AT-SPI2 Accessibility Packages..."
+echo "[4/7] Installing Orca, GTK3, DBus, Terminal & Accessibility Packages..."
 apt-get install -y -qq \
     orca \
     python3-pyatspi \
@@ -66,6 +66,8 @@ apt-get install -y -qq \
     x11-xserver-utils \
     x11-utils \
     xdotool \
+    lxterminal \
+    xterm \
     nodm \
     python3 \
     python3-pip \
