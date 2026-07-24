@@ -272,7 +272,7 @@ echo "[7/7] Configurando lightdm como display manager padrão..."
 systemctl disable nodm 2>/dev/null || true
 systemctl stop nodm 2>/dev/null || true
 
-# Configurar lightdm para usar win-a11y-shell como sessão padrão
+# Configurar lightdm — tela de login real, usuário digita credenciais
 mkdir -p /etc/lightdm
 cat << 'EOF' > /etc/lightdm/lightdm.conf
 [Seat:*]
@@ -286,8 +286,8 @@ systemctl set-default graphical.target 2>/dev/null || true
 
 echo "=================================================="
 echo "  INSTALLATION COMPLETE!"
-echo "  Display Manager: lightdm (tela de login real)"
-echo "  Sessão: win-a11y-shell (qualquer usuário do sistema)"
-echo "  Orca: configurado automaticamente ao logar"
+echo "  Display Manager: lightdm (tela de login)"
+echo "  Sessão: win-a11y-shell (após login do usuário)"
+echo "  Orca + daemon: iniciados automaticamente ao logar"
 echo "  Reinicie o sistema para ativar: reboot"
 echo "=================================================="
