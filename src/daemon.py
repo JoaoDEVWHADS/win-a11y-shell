@@ -107,12 +107,6 @@ class RealtimeShellDaemon:
                                         self.super_pressed = (event.value in (1, 2))
                                     
                                     elif event.value == 1:
-                                        if self.controller.is_visible():
-                                            if self.shift_pressed and event.code == ecodes.KEY_TAB:
-                                                GLib.idle_add(self.controller.cycle_tab_reverse)
-                                            elif event.code == ecodes.KEY_TAB:
-                                                GLib.idle_add(self.controller.cycle_tab)
-                                        
                                         if self.super_pressed and event.code == ecodes.KEY_B:
                                             print("[DEBUG Daemon] Atalho detectado: Win+B (SysTray)", flush=True)
                                             self.trigger_systray()
@@ -140,8 +134,8 @@ def main():
     # Hide window on startup
     daemon.controller.hide()
 
-    # Automatically trigger login window if screen is locked / startup
-    GLib.idle_add(daemon.controller.login_window.open_login)
+    # Login window is NOT auto-opened on daemon restart.
+    # It can be triggered externally or via a dedicated hotkey.
 
     try:
         Gtk.main()

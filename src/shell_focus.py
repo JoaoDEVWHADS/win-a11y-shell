@@ -8,6 +8,7 @@ from speech import SpeechEngine
 from systray import SystemTray
 from taskbar import get_running_windows, activate_window
 from login import AccessibleLoginWindow
+from startmenu import StartMenuWindow
 
 class WindowsFocusController(Gtk.Window):
     """
@@ -22,6 +23,7 @@ class WindowsFocusController(Gtk.Window):
         self.speech = speech
         self.systray = SystemTray(speech)
         self.login_window = AccessibleLoginWindow(speech)
+        self.start_menu = StartMenuWindow(speech, on_close_callback=self._on_start_menu_closed)
         
         # Clear ATK accessible name so Orca does not speak any window title
         atk_win = self.get_accessible()
@@ -58,6 +60,10 @@ class WindowsFocusController(Gtk.Window):
 
         self.reload_real_desktop()
         self.connect("key-press-event", self.on_key_press)
+
+    def _on_start_menu_closed(self):
+        """Called when StartMenuWindow is closed with Escape — return focus to 'start' region."""
+        self.focus_region('start')
 
     def reload_real_desktop(self):
         items = []
@@ -171,15 +177,15 @@ class WindowsFocusController(Gtk.Window):
 
         target_idx = 0
         if region == 'desktop':
-            target_idx = min(self.desktop_idx, len(rows_to_focus) - 1)
+            target_idx = min(self.desktop_idx, max(0, len(rows_to_focus) - 1))
         elif region == 'taskbar':
-            target_idx = min(self.taskbar_idx, len(rows_to_focus) - 1)
+            target_idx = min(self.taskbar_idx, max(0, len(rows_to_focus) - 1))
 
-        if rows_to_focus and target_idx >= 0:
+        if rows_to_focus and 0 <= target_idx < len(rows_to_focus):
             target_row = rows_to_focus[target_idx]
             self.listbox.select_row(target_row)
             target_row.grab_focus()
-            self.speech.speak(rows_to_focus[target_idx].get_accessible().get_name(), target_row)
+            self.speech.speak(target_row.get_accessible().get_name(), target_row)
 
     def on_key_press(self, widget, event):
         key = event.keyval
@@ -198,7 +204,12 @@ class WindowsFocusController(Gtk.Window):
             self.hide()
             return True
         elif key == Gdk.KEY_Return or key == Gdk.KEY_KP_Enter:
-            if region == 'taskbar' and self.taskbar_items:
+            if region == 'start':
+                # Open the Start Menu
+                self.hide()
+                self.start_menu.open()
+                return True
+            elif region == 'taskbar' and self.taskbar_items:
                 selected_row = self.listbox.get_selected_row()
                 idx = selected_row.get_index() if selected_row else self.taskbar_idx
                 if 0 <= idx < len(self.taskbar_items):
@@ -215,6 +226,9 @@ class WindowsFocusController(Gtk.Window):
                     if path != "folder":
                         subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     return True
+            elif region == 'systray':
+                self.systray.activate()
+                return True
 
         children = self.listbox.get_children()
         total_children = len(children)
