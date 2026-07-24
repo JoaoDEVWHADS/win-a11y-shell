@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 win-a11y-shell Real-Time Daemon
-Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal with forced X11 Focus)
+Hotkeys: Win+B (SysTray), Win+M / Win+D (Desktop), Ctrl+Alt+T (GNOME Terminal)
+Instant speech interruption on Shift, Control, Alt, Tab, Escape, Arrows.
 """
 
 import os
@@ -29,6 +30,7 @@ class RealtimeShellDaemon:
         self.super_pressed = False
         self.ctrl_pressed = False
         self.alt_pressed = False
+        self.shift_pressed = False
 
     def trigger_desktop(self):
         GLib.idle_add(lambda: self.controller.focus_region('desktop'))
@@ -43,7 +45,6 @@ class RealtimeShellDaemon:
         
         try:
             subprocess.Popen(["gnome-terminal"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # Force focus window activation after 0.5s so user can immediately type into shell
             def force_focus():
                 time.sleep(0.5)
                 subprocess.run(
@@ -98,12 +99,20 @@ class RealtimeShellDaemon:
                 try:
                     for event in dev.read():
                         if event.type == ecodes.EV_KEY:
-                            if event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
-                                self.super_pressed = (event.value in (1, 2))
+                            if event.code in (ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT):
+                                self.shift_pressed = (event.value in (1, 2))
+                                if event.value == 1:
+                                    self.speech.interrupt()
                             elif event.code in (ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL):
                                 self.ctrl_pressed = (event.value in (1, 2))
+                                if event.value == 1:
+                                    self.speech.interrupt()
                             elif event.code in (ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT):
                                 self.alt_pressed = (event.value in (1, 2))
+                                if event.value == 1:
+                                    self.speech.interrupt()
+                            elif event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
+                                self.super_pressed = (event.value in (1, 2))
                             
                             elif event.value == 1:
                                 if self.super_pressed and event.code == ecodes.KEY_B:
