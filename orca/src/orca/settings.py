@@ -385,7 +385,7 @@ keyBindingsMap          = {}
 brailleBindingsMap      = {}
 
 # TODO - JD: Is this still needed now that AT-SPI has its own timeout?
-timeoutTime             = 10   # a value of 0 means don't do hang checking
+timeoutTime             = 0    # a value of 0 means don't do hang checking
 timeoutCallback         = None # Set by orca.py:init to orca.timeout
 
 structNavTriggersFocusMode = False
