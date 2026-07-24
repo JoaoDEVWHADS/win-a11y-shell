@@ -6,25 +6,23 @@ import queue
 
 class SpeechEngine:
     """
-    Ultra-Robust Sound Synthesizer Engine for Linux Debian.
-    Automatically resets ALSA audio hardware & unmutes channels on startup.
+    Direct Wave ALSA Speech Engine for Debian Linux.
+    Generates WAV audio via espeak-ng and streams directly through aplay.
     """
     def __init__(self):
         self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
+        self.aplay = shutil.which("aplay")
         self.speech_queue = queue.Queue(maxsize=3)
         
-        # Auto-reset audio hardware on startup
         self.init_audio_hardware()
 
         self.worker_thread = threading.Thread(target=self._speech_worker, daemon=True)
         self.worker_thread.start()
 
     def init_audio_hardware(self):
-        """Automatic audio hardware reset & unmute procedure on daemon startup."""
+        """Unmute ALSA Master channel."""
         try:
             subprocess.run(["amixer", "set", "Master", "100%", "unmute"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["amixer", "set", "PCM", "100%", "unmute"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["alsactl", "restore"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:
             pass
 
@@ -47,12 +45,26 @@ class SpeechEngine:
             pass
 
     def _speech_worker(self):
+        wav_file = "/tmp/win_a11y_speech.wav"
         while True:
             text = self.speech_queue.get()
             if self.espeak and text:
                 try:
-                    cmd = f'espeak-ng -v pt-br -s 175 "{text}" >/dev/null 2>&1'
-                    subprocess.run(cmd, shell=True, timeout=3)
+                    # Synthesize clean WAV file
+                    subprocess.run(
+                        [self.espeak, "-v", "pt-br", "-s", "175", text, "-w", wav_file],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=3
+                    )
+                    # Play WAV file via ALSA default hardware
+                    if self.aplay and os.path.exists(wav_file):
+                        subprocess.run(
+                            [self.aplay, "-q", wav_file],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=3
+                        )
                 except Exception:
                     pass
             self.speech_queue.task_done()
