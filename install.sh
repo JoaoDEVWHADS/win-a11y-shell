@@ -267,6 +267,10 @@ ORCACFG
 gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || true
 gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true 2>/dev/null || true
 
+# Matar instancias antigas do daemon ou lock residual
+pkill -u "$USER" -f daemon.py 2>/dev/null || true
+rm -f /tmp/win_a11y_shell.lock 2>/dev/null || true
+
 openbox &
 /usr/local/bin/orca --replace &
 exec /usr/local/bin/win-a11y-shell
