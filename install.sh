@@ -97,7 +97,11 @@ fi
 export GTK_MODULES=gail:atk-bridge
 export QT_ACCESSIBILITY=1
 export NO_AT_BRIDGE=0
+export ACCESSIBILITY_ENABLED=1
+export GNOME_ACCESSIBILITY=1
+
 gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
+gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
 
 openbox &
 orca --replace &
