@@ -1,37 +1,59 @@
 import os
 import subprocess
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, Atk
+import shutil
+import threading
+import queue
 
 class SpeechEngine:
     """
-    100% Native Orca Accessibility Engine.
-    Emits ATK Accessible Focus/Name events directly to Orca.
+    Direct Audio Synthesizer Pipeline for Orca and Accessible System Announcements.
+    Ensures immediate portuguese audio feedback on any Debian setup.
     """
     def __init__(self):
-        pass
+        self.espeak = shutil.which("espeak-ng") or shutil.which("espeak")
+        self.aplay = shutil.which("aplay")
+        self.speech_queue = queue.Queue(maxsize=3)
+
+        self.worker_thread = threading.Thread(target=self._speech_worker, daemon=True)
+        self.worker_thread.start()
 
     def speak(self, text: str, widget=None):
-        """
-        Notify Orca screen reader via GTK ATK Accessible Name update.
-        """
         if not text:
             return
             
-        print(f"[ORCA ATK NATIVE]: {text}")
+        print(f"[SPEECH ANNOUNCEMENT]: {text}")
+        clean_text = text.replace('"', '').replace("'", "").strip()
         
-        # If a GTK widget is passed, set ATK Accessible Name for Orca
-        if widget and hasattr(widget, 'get_accessible'):
+        while not self.speech_queue.empty():
             try:
-                atk_obj = widget.get_accessible()
-                atk_obj.set_name(text)
-                atk_obj.notify("accessible-name")
-            except Exception:
-                pass
-        
-        # Fallback AT-SPI2 system notification for Orca
+                self.speech_queue.get_nowait()
+            except queue.Empty:
+                break
+
         try:
-            subprocess.Popen(["spd-say", "-m", "orca", "-r", "15", text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
+            self.speech_queue.put_nowait(clean_text)
+        except queue.Full:
             pass
+
+    def _speech_worker(self):
+        wav_file = "/tmp/win_a11y_speech.wav"
+        while True:
+            text = self.speech_queue.get()
+            if text and self.espeak:
+                try:
+                    subprocess.run(
+                        [self.espeak, "-v", "pt-br", "-s", "175", text, "-w", wav_file],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=2
+                    )
+                    if self.aplay and os.path.exists(wav_file):
+                        subprocess.run(
+                            [self.aplay, "-q", wav_file],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=2
+                        )
+                except Exception:
+                    pass
+            self.speech_queue.task_done()
