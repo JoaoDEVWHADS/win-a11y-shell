@@ -78,8 +78,17 @@ apt-get install -y -qq \
     python3 \
     python3-pip \
     python3-gi \
+    xdotool \
+    wmctrl \
+    nodm \
+    python3 \
+    python3-pip \
+    python3-gi \
     gir1.2-gtk-3.0 \
-    python3-evdev
+    python3-evdev \
+    python3-dasbus \
+    python3-setproctitle \
+    gsettings-desktop-schemas
 
 cat << 'EOF' > /etc/environment
 DISPLAY=:0
@@ -90,9 +99,36 @@ ACCESSIBILITY_ENABLED=1
 GNOME_ACCESSIBILITY=1
 EOF
 
-echo "[5/7] Installing application files to /opt/win-a11y-shell..."
+echo "[5/7] Installing application files and embedded custom Orca..."
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p /opt/win-a11y-shell
-cp -rf src/* /opt/win-a11y-shell/
+cp -rf "$PROJECT_DIR"/src/* /opt/win-a11y-shell/
+if [ -d "$PROJECT_DIR/orca" ]; then
+    cp -rf "$PROJECT_DIR/orca" /opt/win-a11y-shell/
+fi
+
+cat << 'EOF' > /usr/local/bin/orca
+#!/usr/bin/env bash
+export DISPLAY=:0
+export GTK_MODULES=gail:atk-bridge
+export QT_ACCESSIBILITY=1
+export NO_AT_BRIDGE=0
+export ACCESSIBILITY_ENABLED=1
+export GNOME_ACCESSIBILITY=1
+
+# Resolve dynamic path to embedded Orca
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -d "/opt/win-a11y-shell/orca/src" ]; then
+    ORCA_DIR="/opt/win-a11y-shell/orca/src"
+else
+    ORCA_DIR="$(dirname "$SCRIPT_DIR")/win-a11y-shell/orca/src"
+fi
+
+export PYTHONPATH="$ORCA_DIR:$PYTHONPATH"
+exec python3 -m orca.orca "$@"
+EOF
+chmod +x /usr/local/bin/orca
+cp -f /usr/local/bin/orca /usr/bin/orca 2>/dev/null || true
 
 cat << 'EOF' > /usr/local/bin/win-a11y-shell
 #!/usr/bin/env bash
@@ -102,7 +138,16 @@ export QT_ACCESSIBILITY=1
 export NO_AT_BRIDGE=0
 export ACCESSIBILITY_ENABLED=1
 export GNOME_ACCESSIBILITY=1
-python3 /opt/win-a11y-shell/daemon.py "$@"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -d "/opt/win-a11y-shell" ]; then
+    APP_DIR="/opt/win-a11y-shell"
+else
+    APP_DIR="$(dirname "$SCRIPT_DIR")/win-a11y-shell"
+fi
+
+export PYTHONPATH="$APP_DIR/orca/src:$PYTHONPATH"
+exec python3 "$APP_DIR/daemon.py" "$@"
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
 
@@ -126,8 +171,8 @@ gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || 
 
 openbox &
 spd-say "Leitor de tela ativado" 2>/dev/null || true
-orca --replace &
-exec python3 /opt/win-a11y-shell/daemon.py
+/usr/local/bin/orca --replace &
+exec /usr/local/bin/win-a11y-shell
 EOF
 chmod +x /root/.xinitrc
 
