@@ -158,6 +158,13 @@ mkdir -p /opt/win-a11y-shell
 cp -rf "$PROJECT_DIR"/src/* /opt/win-a11y-shell/
 if [ -d "$PROJECT_DIR/orca" ]; then
     cp -rf "$PROJECT_DIR/orca" /opt/win-a11y-shell/
+    mkdir -p /usr/share/locale/pt_BR/LC_MESSAGES /usr/share/locale/pt/LC_MESSAGES
+    if [ -f "$PROJECT_DIR/orca/po/pt_BR.po" ]; then
+        msgfmt -o /usr/share/locale/pt_BR/LC_MESSAGES/orca.mo "$PROJECT_DIR/orca/po/pt_BR.po" 2>/dev/null || true
+    fi
+    if [ -f "$PROJECT_DIR/orca/po/pt.po" ]; then
+        msgfmt -o /usr/share/locale/pt/LC_MESSAGES/orca.mo "$PROJECT_DIR/orca/po/pt.po" 2>/dev/null || true
+    fi
 fi
 
 cat << 'EOF' > /usr/local/bin/orca
