@@ -1,5 +1,4 @@
 import os
-import glob
 import subprocess
 import gi
 gi.require_version('Gtk', '3.0')
@@ -7,11 +6,12 @@ from gi.repository import Gtk, Gdk, GLib
 
 from speech import SpeechEngine
 from systray import SystemTray
+from taskbar import get_running_windows
 
 class WindowsFocusController(Gtk.Window):
     """
     Unified Windows + NVDA Focus Controller.
-    Real user desktop files navigation with Arrow Keys (Left, Right, Up, Down).
+    Dynamic real user Desktop files + Dynamic REAL open Linux windows taskbar.
     """
     REGIONS = ['desktop', 'start', 'taskbar', 'systray']
 
@@ -23,6 +23,9 @@ class WindowsFocusController(Gtk.Window):
         self.current_region_idx = 0
         self.desktop_items = []
         self.desktop_idx = 0
+
+        self.taskbar_items = []
+        self.taskbar_idx = 0
 
         self.set_default_size(800, 500)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -47,22 +50,15 @@ class WindowsFocusController(Gtk.Window):
         self.connect("key-press-event", self.on_key_press)
 
     def reload_real_desktop(self):
-        """Load real files from ~/Desktop and default system apps."""
         items = []
         desktop_dir = os.path.expanduser("~/Desktop")
         if os.path.exists(desktop_dir):
             for entry in sorted(os.listdir(desktop_dir)):
-                items.append((entry, os.path.join(desktop_dir, entry)))
+                if not entry.startswith('.'):
+                    items.append((entry, os.path.join(desktop_dir, entry)))
 
-        # Fallback default shortcuts if desktop is empty
         if not items:
-            items = [
-                ("Área de Trabalho", "folder"),
-                ("FileZilla Client", "filezilla"),
-                ("TeamTalk 5", "teamtalk"),
-                ("Google Chrome", "google-chrome"),
-                ("Bloco de Notas", "gedit")
-            ]
+            items = [("Área de Trabalho", "folder")]
 
         self.desktop_items = items
 
@@ -85,7 +81,7 @@ class WindowsFocusController(Gtk.Window):
             total = len(self.desktop_items)
             item_name = self.desktop_items[self.desktop_idx][0]
             speech_str = f"Desktop  lista\n{item_name}  {self.desktop_idx + 1} de {total}"
-            self.label_region.set_text(f"Desktop (Área de Trabalho)")
+            self.label_region.set_text("Desktop (Área de Trabalho)")
 
             for idx, (name, _) in enumerate(self.desktop_items, start=1):
                 row = Gtk.ListBoxRow()
@@ -104,13 +100,21 @@ class WindowsFocusController(Gtk.Window):
             self.listbox.add(row)
 
         elif region == 'taskbar':
-            speech_str = "TeamTalk 5 - 1 janela em execução  botão  1 de 1"
-            self.label_region.set_text("Barra de Tarefas")
-            row = Gtk.ListBoxRow()
-            label = Gtk.Label(label=speech_str)
-            label.set_xalign(0)
-            row.add(label)
-            self.listbox.add(row)
+            self.taskbar_items = get_running_windows()
+            total = len(self.taskbar_items)
+            if self.taskbar_idx >= total:
+                self.taskbar_idx = 0
+            
+            wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
+            speech_str = f"{wtitle}  botão  {pos} de {tot}"
+            self.label_region.set_text("Barra de Tarefas (Janelas em execução)")
+
+            for wid, wtitle, pos, tot in self.taskbar_items:
+                row = Gtk.ListBoxRow()
+                label = Gtk.Label(label=f"{wtitle}  botão  {pos} de {tot}")
+                label.set_xalign(0)
+                row.add(label)
+                self.listbox.add(row)
 
         elif region == 'systray':
             speech_str = "Mostrar Ícones Ocultos Mostrar ícones ocultos  botão"
@@ -150,6 +154,19 @@ class WindowsFocusController(Gtk.Window):
                 self.desktop_idx = (self.desktop_idx - 1) % total
                 item_name = self.desktop_items[self.desktop_idx][0]
                 self.speech.speak(f"{item_name}  {self.desktop_idx + 1} de {total}")
+                return True
+
+        elif region == 'taskbar':
+            total = len(self.taskbar_items)
+            if key in (Gdk.KEY_Right, Gdk.KEY_Down):
+                self.taskbar_idx = (self.taskbar_idx + 1) % total
+                wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
+                self.speech.speak(f"{wtitle}  botão  {pos} de {tot}")
+                return True
+            elif key in (Gdk.KEY_Left, Gdk.KEY_Up):
+                self.taskbar_idx = (self.taskbar_idx - 1) % total
+                wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
+                self.speech.speak(f"{wtitle}  botão  {pos} de {tot}")
                 return True
 
         elif region == 'systray' and key in (Gdk.KEY_Left, Gdk.KEY_Right):
