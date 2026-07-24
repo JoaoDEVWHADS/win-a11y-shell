@@ -2795,8 +2795,28 @@ class Script(script.Script):
     ########################################################################
 
     def speak_key_event(self, event):
-        """Method to speak a keyboard event. Disabled to silence command key speech."""
-        return
+        """Method to speak a keyboard event. Only speaks printable character/number keys."""
+        if not event or not hasattr(event, "event_string"):
+            return
+        
+        event_str = str(event.event_string or "").strip()
+        
+        ignored_keys = {
+            "Control_L", "Control_R", "Alt_L", "Alt_R", "Shift_L", "Shift_R",
+            "Tab", "ISO_Left_Tab", "Caps_Lock", "Escape", "Super_L", "Super_R",
+            "Meta_L", "Meta_R", "Menu", "Num_Lock", "Scroll_Lock", "Pause",
+            "Insert", "KP_Insert"
+        }
+        
+        if event.is_modifier_key() or event.is_action_key() or event.is_function_key() or event_str in ignored_keys:
+            return
+
+        string = None
+        if event.is_printable_key():
+            string = event.event_string
+
+        voice = self.speech_generator.voice(string=string)
+        speech.speak_key_event(event, voice)
 
     def spell_item(self, string):
         """Speak the characters in the string one by one."""

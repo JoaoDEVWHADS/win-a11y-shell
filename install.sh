@@ -137,14 +137,19 @@ orca.settings.voices = {
     }
 }
 
-# Disable Key Echo for Modifier & Action Keys (Control, Alt, Shift, Tab, etc.)
-orca.settings.enableKeyEcho = False
+# Enable Character & Number Echo while Typing
+orca.settings.enableKeyEcho = True
+orca.settings.enableAlphabeticKeys = True
+orca.settings.enableNumericKeys = True
+orca.settings.enablePunctuationKeys = True
+orca.settings.enableSpace = True
+orca.settings.enableEchoByCharacter = True
+
+# Disable Modifier & Action Key Echo (Control, Alt, Shift, Tab, etc.)
 orca.settings.enableModifierKeys = False
 orca.settings.enableFunctionKeys = False
 orca.settings.enableActionKeys = False
 orca.settings.enableNavigationKeys = False
-orca.settings.enableEchoByCharacter = False
-orca.settings.enableEchoByWord = False
 orca.settings.speakBlankLines = True
 orca.settings.speakMultiCaseStringsAsWords = True
 

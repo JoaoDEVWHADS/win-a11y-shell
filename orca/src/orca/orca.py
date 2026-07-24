@@ -442,11 +442,22 @@ def main():
 
     # Various signal handlers we want to listen for.
     #
+    def show_preferences_on_signal(signum, frame):
+        """Signal handler to open Preferences GUI inside running Orca process."""
+        debug.printMessage(debug.LEVEL_INFO, "ORCA: Received SIGUSR1 - Opening Preferences GUI.", True)
+        try:
+            script = script_manager.get_manager().get_active_script() or script_manager.get_manager().get_default_script()
+            if script:
+                script.show_preferences_gui()
+        except Exception:
+            debug.printException(debug.LEVEL_SEVERE)
+
     signal.signal(signal.SIGHUP, shutdownOnSignal)
     signal.signal(signal.SIGINT, shutdownOnSignal)
     signal.signal(signal.SIGTERM, shutdownOnSignal)
     signal.signal(signal.SIGQUIT, shutdownOnSignal)
     signal.signal(signal.SIGSEGV, crashOnSignal)
+    signal.signal(signal.SIGUSR1, show_preferences_on_signal)
 
     debug.printMessage(debug.LEVEL_INFO, "ORCA: Enabling accessibility (if needed).", True)
     if not settings_manager.get_manager().is_accessibility_enabled():
