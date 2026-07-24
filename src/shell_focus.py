@@ -18,15 +18,15 @@ class WindowsFocusController(Gtk.Window):
 
     def __init__(self, speech: SpeechEngine):
         super().__init__()
-        self.set_title("Área de Trabalho")
+        self.set_title("win-a11y-shell")
         self.speech = speech
         self.systray = SystemTray(speech)
         self.login_window = AccessibleLoginWindow(speech)
         
-        # Override ATK accessible name for the main window to avoid 'win-a11y-shell'
+        # Override ATK accessible name for the main window to avoid repeating 'Área de Trabalho'
         atk_win = self.get_accessible()
         if atk_win:
-            atk_win.set_name("Área de Trabalho")
+            atk_win.set_name("win-a11y-shell")
 
         self.current_region_idx = 0
         self.desktop_items = []
@@ -68,7 +68,7 @@ class WindowsFocusController(Gtk.Window):
                     items.append((entry, os.path.join(desktop_dir, entry)))
 
         if not items:
-            items = [("Área de Trabalho", "folder")]
+            items = [("Nenhum item na Área de Trabalho", "folder")]
 
         self.desktop_items = items
 

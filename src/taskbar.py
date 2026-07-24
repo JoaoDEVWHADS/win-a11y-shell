@@ -15,7 +15,7 @@ def get_running_windows():
             try:
                 name = subprocess.check_output(["xdotool", "getwindowname", wid], stderr=subprocess.DEVNULL).decode('utf-8').strip()
                 print(f"[DEBUG Taskbar] WID {wid} -> Titulo: '{name}'", flush=True)
-                if name and name not in ("win-a11y-shell", "openbox", "Desktop"):
+                if name and name not in ("win-a11y-shell", "openbox", "Desktop", "Área de Trabalho") and "win-a11y-shell" not in name:
                     windows.append((wid, f"{name} - 1 janela em execução", idx, total))
             except Exception as e:
                 print(f"[DEBUG Taskbar] Erro lendo nome da janela {wid}: {e}", flush=True)
