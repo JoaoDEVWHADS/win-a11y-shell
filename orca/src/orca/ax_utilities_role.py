@@ -344,7 +344,9 @@ class AXUtilitiesRole:
         if not isinstance(role, Atspi.Role):
             return AXObject.get_role_name(obj, True)
 
-        return Atspi.role_get_localized_name(role)
+        if hasattr(Atspi, "role_get_localized_name"):
+            return Atspi.role_get_localized_name(role)
+        return Atspi.role_get_name(role)
 
     @staticmethod
     def have_same_role(obj1, obj2):
