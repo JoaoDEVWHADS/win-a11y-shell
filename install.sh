@@ -285,6 +285,15 @@ greeter-session=lightdm-gtk-greeter
 greeter-setup-script=/usr/local/bin/win-a11y-greeter-setup
 EOF
 
+cat << 'EOF' > /etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+a11y-states=+reader
+reader=orca
+indicators=~host;~spacer;~clock;~power;~a11y
+active-monitor=0
+EOF
+
+
 # Habilitar e iniciar lightdm
 systemctl enable lightdm 2>/dev/null || true
 systemctl set-default graphical.target 2>/dev/null || true
