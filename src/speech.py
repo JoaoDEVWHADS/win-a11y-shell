@@ -39,7 +39,7 @@ class SpeechEngine:
 
     def is_orca_running(self):
         try:
-            res = subprocess.run(["pgrep", "-x", "orca"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            res = subprocess.run(["pgrep", "-f", "orca"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return res.returncode == 0
         except Exception:
             return False
