@@ -12,7 +12,7 @@ from login import AccessibleLoginWindow
 class WindowsFocusController(Gtk.Window):
     """
     Unified Windows + NVDA Focus Controller.
-    Emits native AT-SPI2 GTK ATK Focus and Name events for Orca Screen Reader.
+    Hides accessibility shell upon launching/switching external windows so keyboard focus (Tab, Arrows) operates 100% inside external windows.
     """
     REGIONS = ['desktop', 'start', 'taskbar', 'systray']
 
@@ -187,6 +187,7 @@ class WindowsFocusController(Gtk.Window):
         elif key == Gdk.KEY_Return or key == Gdk.KEY_KP_Enter:
             if region == 'taskbar' and self.taskbar_items:
                 wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
+                # Hide win-a11y-shell window so external window receives 100% keyboard input focus (Tab, Arrows)
                 self.hide()
                 activate_window(wid)
                 return True
