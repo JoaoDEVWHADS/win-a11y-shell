@@ -238,6 +238,8 @@ cat << 'ENDSESSION' > /usr/local/bin/win-a11y-shell-session
 export DISPLAY="${DISPLAY:-:0}"
 export GTK_MODULES=gail:atk-bridge
 export QT_ACCESSIBILITY=1
+export QT_LINUX_ACCESSIBILITY_ALWAYS_ON=1
+export QT_QPA_PLATFORMTHEME=gtk2
 export NO_AT_BRIDGE=0
 export ACCESSIBILITY_ENABLED=1
 export GNOME_ACCESSIBILITY=1
