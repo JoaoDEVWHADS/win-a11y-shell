@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """
-win-a11y-shell Real-Time Daemon with SysTray & Desktop Window Integration
+win-a11y-shell Real-Time Daemon
+Unified Windows Focus Navigation (Desktop -> Start -> Taskbar -> SysTray via Tab)
 """
 
 import os
 import sys
-import time
 import glob
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
 
 from speech import SpeechEngine
-from systray import SystemTray
-from window import AccessibleShellWindow
-from desktop import AccessibleDesktopWindow
+from shell_focus import WindowsFocusController
 
 try:
     import evdev
@@ -25,20 +23,18 @@ except ImportError:
 class RealtimeShellDaemon:
     def __init__(self):
         self.speech = SpeechEngine()
-        self.systray = SystemTray(self.speech)
-        self.systray_window = AccessibleShellWindow(self.speech, self.systray)
-        self.desktop_window = AccessibleDesktopWindow(self.speech)
+        self.controller = WindowsFocusController(self.speech)
         self.super_pressed = False
 
-    def trigger_systray_window(self):
-        GLib.idle_add(self.systray_window.open_systray_window)
+    def trigger_desktop(self):
+        GLib.idle_add(lambda: self.controller.focus_region('desktop'))
 
-    def trigger_desktop_window(self):
-        GLib.idle_add(self.desktop_window.open_desktop_window)
+    def trigger_systray(self):
+        GLib.idle_add(lambda: self.controller.focus_region('systray'))
 
     def start(self):
         print("==================================================")
-        print("  win-a11y-shell Daemon (Win+B / Win+M / Win+D Active)")
+        print("  win-a11y-shell Daemon (Unified Windows Active)")
         print("==================================================")
 
         GLib.idle_add(self.listen_evdev)
@@ -80,9 +76,9 @@ class RealtimeShellDaemon:
                                 self.super_pressed = (event.value == 1 or event.value == 2)
                             elif event.value == 1 and self.super_pressed:
                                 if event.code == ecodes.KEY_B:
-                                    self.trigger_systray_window()
+                                    self.trigger_systray()
                                 elif event.code in (ecodes.KEY_M, ecodes.KEY_D):
-                                    self.trigger_desktop_window()
+                                    self.trigger_desktop()
                 except OSError:
                     pass
 
