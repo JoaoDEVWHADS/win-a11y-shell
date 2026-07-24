@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# win-a11y-shell Installer (Debian Minimal Xorg + Openbox + Accessibility Shell)
+# win-a11y-shell Complete Automatic Installer & Audio Fix
 # ==============================================================================
 
 set -e
@@ -14,10 +14,40 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[1/6] Updating package lists..."
-apt-get update -qq
+echo "[1/6] Purging audio-locking console services (espeakup)..."
+apt-get purge -y espeakup 2>/dev/null || true
 
-echo "[2/6] Installing Xorg minimal display server & Openbox..."
+echo "[2/6] Configuring ALSA Shared Audio (dmix) in /etc/asound.conf..."
+cat << 'EOF' > /etc/asound.conf
+pcm.!default {
+    type plug
+    slave.pcm "dmixer"
+}
+pcm.dmixer {
+    type dmix
+    ipc_key 1024
+    ipc_key_add_uid false
+    ipc_perm 0666
+    slave {
+        pcm "hw:0,0"
+        period_time 0
+        period_size 1024
+        buffer_size 4096
+        rate 44100
+    }
+    bindings {
+        0 0
+        1 1
+    }
+}
+ctl.!default {
+    type hw
+    card 0
+}
+EOF
+
+echo "[3/6] Installing Xorg minimal display server & Openbox..."
+apt-get update -qq
 apt-get install -y -qq \
     xserver-xorg-core \
     xinit \
@@ -27,7 +57,7 @@ apt-get install -y -qq \
     xdotool \
     nodm
 
-echo "[3/6] Installing GTK3 & Speech Dispatcher dependencies..."
+echo "[4/6] Installing GTK3 & Speech dependencies..."
 apt-get install -y -qq \
     python3 \
     python3-pip \
@@ -36,13 +66,13 @@ apt-get install -y -qq \
     speech-dispatcher \
     python3-speechd \
     espeak-ng \
-    python3-evdev
+    python3-evdev \
+    alsa-utils
 
-echo "[4/6] Installing application files to /opt/win-a11y-shell..."
+echo "[5/6] Installing application files..."
 mkdir -p /opt/win-a11y-shell
 cp -rf src/* /opt/win-a11y-shell/
 
-# Create launcher
 cat << 'EOF' > /usr/local/bin/win-a11y-shell
 #!/usr/bin/env bash
 export DISPLAY=:0
@@ -50,7 +80,7 @@ python3 /opt/win-a11y-shell/daemon.py "$@"
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
 
-echo "[5/6] Configuring X11 autostart (~/.xinitrc)..."
+echo "[6/6] Configuring autostart (~/.xinitrc & nodm)..."
 cat << 'EOF' > /root/.xinitrc
 #!/usr/bin/env bash
 openbox &
@@ -58,7 +88,6 @@ python3 /opt/win-a11y-shell/daemon.py
 EOF
 chmod +x /root/.xinitrc
 
-echo "[6/6] Configuring nodm auto-login for display server..."
 cat << 'EOF' > /etc/default/nodm
 NODM_ENABLED=true
 NODM_USER=root
@@ -72,6 +101,5 @@ EOF
 systemctl restart nodm || true
 
 echo "=================================================="
-echo "  INSTALLATION & XORG AUTO-LOGIN COMPLETE!"
-echo "  The display server is now active on screen."
+echo "  INSTALLATION & AUDIO LOCK PREVENTION COMPLETE!"
 echo "=================================================="
