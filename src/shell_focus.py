@@ -73,6 +73,10 @@ class WindowsFocusController(Gtk.Window):
         self.current_region_idx = (self.current_region_idx + 1) % len(self.REGIONS)
         self.render_region()
 
+    def cycle_tab_reverse(self):
+        self.current_region_idx = (self.current_region_idx - 1) % len(self.REGIONS)
+        self.render_region()
+
     def render_region(self):
         region = self.REGIONS[self.current_region_idx]
         for child in self.listbox.get_children():
@@ -93,7 +97,6 @@ class WindowsFocusController(Gtk.Window):
                 label.set_xalign(0)
                 row.add(label)
 
-                # Set ATK Accessible properties for Orca
                 atk_row = row.get_accessible()
                 atk_row.set_name(text)
                 atk_row.set_role(Atk.Role.LIST_ITEM)
@@ -153,7 +156,6 @@ class WindowsFocusController(Gtk.Window):
         self.show_all()
         self.present()
 
-        # Focus current active row so Orca reads it out loud
         target_idx = 0
         if region == 'desktop':
             target_idx = min(self.desktop_idx, len(rows_to_focus) - 1)
@@ -164,16 +166,20 @@ class WindowsFocusController(Gtk.Window):
             target_row = rows_to_focus[target_idx]
             self.listbox.select_row(target_row)
             target_row.grab_focus()
-            
-            # Announce via SpeechEngine
             self.speech.speak(rows_to_focus[target_idx].get_accessible().get_name(), target_row)
 
     def on_key_press(self, widget, event):
         key = event.keyval
+        state = event.state
         region = self.REGIONS[self.current_region_idx]
 
+        is_shift = bool(state & Gdk.ModifierType.SHIFT_MASK)
+
         if key == Gdk.KEY_Tab:
-            self.cycle_tab()
+            if is_shift:
+                self.cycle_tab_reverse()
+            else:
+                self.cycle_tab()
             return True
         elif key == Gdk.KEY_Escape:
             self.hide()
