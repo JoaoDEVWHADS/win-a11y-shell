@@ -272,12 +272,17 @@ echo "[7/7] Configurando lightdm como display manager padrão..."
 systemctl disable nodm 2>/dev/null || true
 systemctl stop nodm 2>/dev/null || true
 
-# Configurar lightdm — tela de login real, usuário digita credenciais
+# Instalar script de setup do greeter (inicia Orca na tela de login)
+cp -f "$PROJECT_DIR/win-a11y-greeter-setup" /usr/local/bin/win-a11y-greeter-setup
+chmod +x /usr/local/bin/win-a11y-greeter-setup
+
+# Configurar lightdm — tela de login real com Orca acessível
 mkdir -p /etc/lightdm
 cat << 'EOF' > /etc/lightdm/lightdm.conf
 [Seat:*]
 user-session=win-a11y-shell
 greeter-session=lightdm-gtk-greeter
+greeter-setup-script=/usr/local/bin/win-a11y-greeter-setup
 EOF
 
 # Habilitar e iniciar lightdm

@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
-# restart.sh — mata TUDO (daemon + Orca) e reinicia do zero
+# restart.sh — reinicia daemon + Orca
+#   Uso:
+#     bash restart.sh           → reinicia só daemon e Orca (sessão atual)
+#     bash restart.sh --greeter → mata TUDO e reinicia lightdm (nova tela de login com Orca)
 set -e
+
+# ─── Modo --greeter: mata tudo e reinicia lightdm ────────────────────────────
+if [ "${1:-}" = "--greeter" ]; then
+    echo "[restart] Modo GREETER — matando tudo e reiniciando lightdm..."
+    pkill -9 -f "orca.orca"    2>/dev/null || true
+    pkill -9 -f "daemon.py"    2>/dev/null || true
+    pkill -9 -f "openbox"      2>/dev/null || true
+    pkill -9 -f "win-a11y"     2>/dev/null || true
+    pkill -9 -f "lightdm-gtk"  2>/dev/null || true
+    rm -f /tmp/win_a11y_shell.lock
+    sleep 2
+    echo "[restart] Reiniciando lightdm (Orca será iniciado no greeter-setup-script)..."
+    systemctl restart lightdm
+    echo "[restart] ✅ lightdm reiniciado — tela de login com Orca ativa"
+    exit 0
+fi
 
 # ─── Detectar DISPLAY e XAUTHORITY automaticamente ───────────────────────────
 # Prioridade: sessão atual → lightdm root → fallback :0
