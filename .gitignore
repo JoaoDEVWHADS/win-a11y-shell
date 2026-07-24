@@ -1,1 +1,7 @@
+# Python cache
 __pycache__/
+*.py[cod]
+*.pyo
+
+# Lock file do daemon
+win_a11y_shell.lock
