@@ -13,12 +13,24 @@ def get_running_windows():
         print(f"[DEBUG Taskbar] Janelas brutas encontradas pelo xdotool: {wids}", flush=True)
         for idx, wid in enumerate(wids, start=1):
             try:
+                wm_class = subprocess.check_output(["xprop", "-id", wid, "WM_CLASS"], stderr=subprocess.DEVNULL).decode('utf-8').lower()
+                # Skip internal win-a11y-shell daemon and openbox windows
+                if "daemon.py" in wm_class or "openbox" in wm_class:
+                    continue
+                
                 name = subprocess.check_output(["xdotool", "getwindowname", wid], stderr=subprocess.DEVNULL).decode('utf-8').strip()
-                print(f"[DEBUG Taskbar] WID {wid} -> Titulo: '{name}'", flush=True)
-                if name and name not in ("win-a11y-shell", "openbox", "Desktop", "Área de Trabalho") and "win-a11y-shell" not in name:
-                    windows.append((wid, f"{name} - 1 janela em execução", idx, total))
+                if not name:
+                    if "gnome-terminal" in wm_class:
+                        name = "GNOME Terminal"
+                    elif "orca" in wm_class:
+                        name = "Preferências do Orca"
+                    else:
+                        name = "Janela sem título"
+
+                print(f"[DEBUG Taskbar] External WID {wid} -> Titulo: '{name}', Class: '{wm_class.strip()}'", flush=True)
+                windows.append((wid, f"{name} - 1 janela em execução", idx, total))
             except Exception as e:
-                print(f"[DEBUG Taskbar] Erro lendo nome da janela {wid}: {e}", flush=True)
+                print(f"[DEBUG Taskbar] Erro lendo dados da janela {wid}: {e}", flush=True)
     except Exception as e:
         print(f"[DEBUG Taskbar] Erro buscando janelas com xdotool: {e}", flush=True)
 

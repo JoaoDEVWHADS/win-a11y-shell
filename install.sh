@@ -67,12 +67,23 @@ apt-get install -y -qq \
     x11-xserver-utils \
     x11-utils \
     xdotool \
+    xdotool \
+    wmctrl \
     nodm \
     python3 \
     python3-pip \
     python3-gi \
     gir1.2-gtk-3.0 \
     python3-evdev
+
+cat << 'EOF' > /etc/environment
+DISPLAY=:0
+GTK_MODULES=gail:atk-bridge
+QT_ACCESSIBILITY=1
+NO_AT_BRIDGE=0
+ACCESSIBILITY_ENABLED=1
+GNOME_ACCESSIBILITY=1
+EOF
 
 echo "[5/7] Installing application files to /opt/win-a11y-shell..."
 mkdir -p /opt/win-a11y-shell
@@ -81,6 +92,11 @@ cp -rf src/* /opt/win-a11y-shell/
 cat << 'EOF' > /usr/local/bin/win-a11y-shell
 #!/usr/bin/env bash
 export DISPLAY=:0
+export GTK_MODULES=gail:atk-bridge
+export QT_ACCESSIBILITY=1
+export NO_AT_BRIDGE=0
+export ACCESSIBILITY_ENABLED=1
+export GNOME_ACCESSIBILITY=1
 python3 /opt/win-a11y-shell/daemon.py "$@"
 EOF
 chmod +x /usr/local/bin/win-a11y-shell
