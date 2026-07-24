@@ -46,6 +46,11 @@ ctl.!default {
 }
 EOF
 
+if [ -f /etc/speech-dispatcher/speechd.conf ]; then
+    sed -i 's/# AudioOutputMethod "pulse"/AudioOutputMethod "alsa"/' /etc/speech-dispatcher/speechd.conf || true
+    sed -i 's/#AudioALSADevice "default"/AudioALSADevice "default"/' /etc/speech-dispatcher/speechd.conf || true
+fi
+
 echo "[3/7] Updating package lists..."
 apt-get update -qq
 
