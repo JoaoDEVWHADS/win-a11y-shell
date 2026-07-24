@@ -45,22 +45,10 @@ class SpeechEngine:
             return False
 
     def speak(self, text: str, widget=None):
-        if not text:
-            return
-            
-        print(f"[WIN-A11Y SPEECH]: {text}")
-        clean_text = text.replace('"', '').replace("'", "").strip()
-        
-        self.interrupt()
-
-        # If Orca is active, let Orca read ATK labels to avoid two overlapping voices
-        if self.is_orca_running():
-            return
-
-        try:
-            self.speech_queue.put_nowait(clean_text)
-        except queue.Full:
-            pass
+        # Disabled completely: Only Orca reads the project via GTK/ATK accessibility
+        if text:
+            print(f"[WIN-A11Y LOG]: {text}")
+        return
 
     def _speech_worker(self):
         wav_file = "/tmp/win_a11y_speech.wav"
