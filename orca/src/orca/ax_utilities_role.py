@@ -344,6 +344,42 @@ class AXUtilitiesRole:
         if not isinstance(role, Atspi.Role):
             return AXObject.get_role_name(obj, True)
 
+        ROLE_NAME_MAP = {
+            Atspi.Role.PUSH_BUTTON: "botão",
+            Atspi.Role.TOGGLE_BUTTON: "botão de alternância",
+            Atspi.Role.RADIO_BUTTON: "botão de opção",
+            Atspi.Role.CHECK_BOX: "caixa de seleção",
+            Atspi.Role.LIST_ITEM: "item de lista",
+            Atspi.Role.LIST: "lista",
+            Atspi.Role.FRAME: "janela",
+            Atspi.Role.WINDOW: "janela",
+            Atspi.Role.LABEL: "rótulo",
+            Atspi.Role.TEXT: "texto",
+            Atspi.Role.ENTRY: "campo de texto",
+            Atspi.Role.PASSWORD_TEXT: "senha",
+            Atspi.Role.PANEL: "painel",
+            Atspi.Role.MENU_ITEM: "item de menu",
+            Atspi.Role.MENU: "menu",
+            Atspi.Role.MENU_BAR: "barra de menus",
+            Atspi.Role.TOOL_BAR: "barra de ferramentas",
+            Atspi.Role.STATUS_BAR: "barra de status",
+            Atspi.Role.TERMINAL: "terminal",
+            Atspi.Role.APPLICATION: "aplicativo",
+            Atspi.Role.DESKTOP_FRAME: "área de trabalho",
+            Atspi.Role.DESKTOP_ICON: "ícone da área de trabalho",
+            Atspi.Role.TABLE: "tabela",
+            Atspi.Role.TABLE_CELL: "célula de tabela",
+            Atspi.Role.COLUMN_HEADER: "cabeçalho de coluna",
+            Atspi.Role.ROW_HEADER: "cabeçalho de linha",
+            Atspi.Role.COMBO_BOX: "caixa de combinação",
+            Atspi.Role.SCROLL_BAR: "barra de rolagem",
+            Atspi.Role.PAGE_TAB: "aba",
+            Atspi.Role.PAGE_TAB_LIST: "lista de abas",
+        }
+
+        if role in ROLE_NAME_MAP:
+            return ROLE_NAME_MAP[role]
+
         if hasattr(Atspi, "role_get_localized_name"):
             return Atspi.role_get_localized_name(role)
         return Atspi.role_get_name(role)
