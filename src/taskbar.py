@@ -49,12 +49,8 @@ def activate_window(wid: str):
         try:
             # Map/unminimize first if minimized
             subprocess.run(["xdotool", "windowmap", wid], check=False, stderr=subprocess.DEVNULL)
-            # Activate window focus
-            res = subprocess.run(["xdotool", "windowactivate", "--sync", wid], check=False, stderr=subprocess.DEVNULL)
-            print(f"[DEBUG ActivateWindow] xdotool windowactivate retorno: {res.returncode}", flush=True)
-            if res.returncode != 0:
-                # Fallback to wmctrl if xdotool fails
-                res_wm = subprocess.run(["wmctrl", "-i", "-a", wid], check=False, stderr=subprocess.DEVNULL)
-                print(f"[DEBUG ActivateWindow] wmctrl retorno: {res_wm.returncode}", flush=True)
+            # Activate window focus via xdotool and wmctrl in parallel for modal/dialog windows
+            subprocess.run(["xdotool", "windowactivate", "--sync", wid], check=False, stderr=subprocess.DEVNULL)
+            subprocess.run(["wmctrl", "-i", "-a", wid], check=False, stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"[DEBUG ActivateWindow] Erro ao ativar janela: {e}", flush=True)
