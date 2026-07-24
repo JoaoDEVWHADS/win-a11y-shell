@@ -112,15 +112,21 @@ class RealtimeShellDaemon:
                                 self.super_pressed = (event.value in (1, 2))
                             
                             elif event.value == 1:
-                                if self.shift_pressed and event.code == ecodes.KEY_TAB:
-                                    GLib.idle_add(self.controller.cycle_tab_reverse)
-                                elif event.code == ecodes.KEY_TAB:
-                                    GLib.idle_add(self.controller.cycle_tab)
-                                elif self.super_pressed and event.code == ecodes.KEY_B:
+                                # Only cycle tab via evdev if the shell window is currently visible
+                                if self.controller.is_visible():
+                                    if self.shift_pressed and event.code == ecodes.KEY_TAB:
+                                        GLib.idle_add(self.controller.cycle_tab_reverse)
+                                    elif event.code == ecodes.KEY_TAB:
+                                        GLib.idle_add(self.controller.cycle_tab)
+                                
+                                if self.super_pressed and event.code == ecodes.KEY_B:
+                                    print("[DEBUG Daemon] Atalho detectado: Win+B (SysTray)", flush=True)
                                     self.trigger_systray()
                                 elif self.super_pressed and event.code in (ecodes.KEY_M, ecodes.KEY_D):
+                                    print("[DEBUG Daemon] Atalho detectado: Win+M/D (Desktop)", flush=True)
                                     self.trigger_desktop()
                                 elif self.ctrl_pressed and self.alt_pressed and event.code == ecodes.KEY_T:
+                                    print("[DEBUG Daemon] Atalho detectado: Ctrl+Alt+T (Terminal)", flush=True)
                                     GLib.idle_add(self.launch_terminal)
                 except OSError:
                     pass

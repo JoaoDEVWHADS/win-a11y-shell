@@ -194,10 +194,22 @@ class WindowsFocusController(Gtk.Window):
             return True
         elif key == Gdk.KEY_Return or key == Gdk.KEY_KP_Enter:
             if region == 'taskbar' and self.taskbar_items:
-                wid, wtitle, pos, tot = self.taskbar_items[self.taskbar_idx]
-                self.hide()
-                activate_window(wid)
-                return True
+                selected_row = self.listbox.get_selected_row()
+                idx = selected_row.get_index() if selected_row else self.taskbar_idx
+                if 0 <= idx < len(self.taskbar_items):
+                    wid, wtitle, pos, tot = self.taskbar_items[idx]
+                    self.hide()
+                    activate_window(wid)
+                    return True
+            elif region == 'desktop' and self.desktop_items:
+                selected_row = self.listbox.get_selected_row()
+                idx = selected_row.get_index() if selected_row else self.desktop_idx
+                if 0 <= idx < len(self.desktop_items):
+                    name, path = self.desktop_items[idx]
+                    self.hide()
+                    if path != "folder":
+                        subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    return True
 
         children = self.listbox.get_children()
         total_children = len(children)
