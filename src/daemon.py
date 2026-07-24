@@ -122,6 +122,9 @@ class RealtimeShellDaemon:
                                         elif self.ctrl_pressed and self.alt_pressed and event.code == ecodes.KEY_T:
                                             print("[DEBUG Daemon] Atalho detectado: Ctrl+Alt+T (Terminal)", flush=True)
                                             self.trigger_terminal()
+                                        elif (self.super_pressed and event.code == ecodes.KEY_O) or (self.ctrl_pressed and self.alt_pressed and event.code == ecodes.KEY_O):
+                                            print("[DEBUG Daemon] Atalho detectado: Win+O (Preferências Orca)", flush=True)
+                                            subprocess.Popen(["/usr/local/bin/orca", "-s"])
                                         elif event.code in (ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA):
                                             print("[DEBUG Daemon] Atalho detectado: Super (Start Menu)", flush=True)
                                             self.trigger_start()
