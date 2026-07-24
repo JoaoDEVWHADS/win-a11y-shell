@@ -20,9 +20,11 @@ from gi.repository import Gtk, Gdk, GLib
 from speech import SpeechEngine
 from shell_focus import WindowsFocusController
 
-# Enforce single instance daemon using file lock
+# Enforce single instance daemon using per-user file lock
 try:
-    lock_file = open('/tmp/win_a11y_shell.lock', 'w')
+    uid = os.getuid()
+    lock_file_path = f'/tmp/win_a11y_shell_{uid}.lock'
+    lock_file = open(lock_file_path, 'w')
     fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except Exception:
     print("[ERROR] Another instance of win-a11y-shell daemon is already running. Exiting.")
