@@ -42,7 +42,7 @@ echo "[2/5] Installing Fluent Windows 11 GTK Theme..."
 if [ -d "$SCRIPT_DIR/src/themes/Fluent-gtk-theme" ]; then
     cd "$SCRIPT_DIR/src/themes/Fluent-gtk-theme"
     chmod +x install.sh
-    ./install.sh -c dark -t default --tweaks round mica || true
+    ./install.sh -c dark -t default --tweaks round || true
 fi
 
 # Definir tema do Windows 11 globalmente para GTK3 e MATE
