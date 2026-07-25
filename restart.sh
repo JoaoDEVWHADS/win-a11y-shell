@@ -69,6 +69,8 @@ else
 fi
 
 nohup env "${ENV_VARS[@]}" $BROWSER_CMD \
+    --no-sandbox \
+    --test-type \
     --kiosk \
     --force-renderer-accessibility \
     --enable-caret-browsing \

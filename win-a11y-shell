@@ -32,8 +32,10 @@ else
     BROWSER_CMD="x-www-browser"
 fi
 
-# Iniciar Chromium em Kiosk Mode com flags de acessibilidade ativas para o Orca
+# Iniciar Chrome em Kiosk Mode com suporte ao Orca e permissão de root sandbox
 exec $BROWSER_CMD \
+    --no-sandbox \
+    --test-type \
     --kiosk \
     --force-renderer-accessibility \
     --enable-caret-browsing \
