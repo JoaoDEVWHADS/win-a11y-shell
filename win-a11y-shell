@@ -13,7 +13,8 @@ export LC_ALL=pt_BR.UTF-8
 export LANGUAGE=pt_BR:pt
 export PYTHONPATH="/opt/win-a11y-shell/orca/src:$PYTHONPATH"
 
-# Aplicar tema Fluent-Dark do Windows 11 no MATE e GTK3
+# Aplicar tema Fluent-Dark do Windows 11 no MATE e GTK3 e ATIVAR ACESSIBILIDADE MATE
+gsettings set org.mate.interface accessibility true 2>/dev/null || true
 gsettings set org.mate.interface gtk-theme 'Fluent-Dark' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface gtk-theme 'Fluent-Dark' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || true
