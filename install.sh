@@ -294,10 +294,14 @@ gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true 2>/
 pkill -u "$USER" -f daemon.py 2>/dev/null || true
 rm -f /tmp/win_a11y_shell.lock 2>/dev/null || true
 
+# Iniciar Openbox (Gerenciador de Janelas) e Orca
 openbox &
-if ! pgrep -u "$USER" -f "orca" >/dev/null 2>&1; then
-    /usr/local/bin/orca --replace &
-fi
+
+pkill -u "$USER" -f orca 2>/dev/null || true
+sleep 1
+/usr/local/bin/orca --replace &
+
+# Executar a interface principal do win-a11y-shell
 exec /usr/local/bin/win-a11y-shell
 ENDSESSION
 chmod +x /usr/local/bin/win-a11y-shell-session
