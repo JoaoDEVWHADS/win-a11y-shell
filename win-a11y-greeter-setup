@@ -13,9 +13,12 @@ chmod 666 /dev/snd/* 2>/dev/null || true
 # Liberar acesso X11 para o usuário lightdm
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
-# Iniciar o Orca explicitamente sob o usuario lightdm
+# Iniciar AT-SPI bus e Orca para o usuário lightdm na tela de login
 (
     sleep 1
+    # Limpar processos residuais do Orca root se existirem no greeter
+    pkill -u root -f orca 2>/dev/null || true
+
     if ! pgrep -u lightdm -f orca >/dev/null 2>&1; then
         runuser -u lightdm -- env \
             DISPLAY=:0 \
@@ -32,9 +35,9 @@ xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
             /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1 &
     fi
 
-    # Focar na janela do greeter para garantir resposta da síntese de voz e teclado
+    # Forçar foco na janela do greeter e simular Tab para acionar fala do Orca
     sleep 2
-    XAUTHORITY=/var/run/lightdm/root/:0 DISPLAY=:0 xdotool search --onlyvisible --class "lightdm-gtk-greeter" windowfocus 2>/dev/null || true
+    XAUTHORITY=/var/run/lightdm/root/:0 DISPLAY=:0 xdotool search --onlyvisible --class "lightdm-gtk-greeter" windowfocus key Tab 2>/dev/null || true
 ) &
 
 exit 0
