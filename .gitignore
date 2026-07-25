@@ -3,5 +3,15 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-# Lock file do daemon
+# Node & Build artifacts
+node_modules/
+build/
+dist/
+.pnp
+.pnp.js
+
+# Logs & Temp
+*.log
 win_a11y_shell.lock
+.env.local
+.DS_Store
