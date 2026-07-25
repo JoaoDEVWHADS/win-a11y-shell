@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# win-a11y-shell launcher script — executado pós-login pelo LightDM
+set -e
+
+export DISPLAY="${DISPLAY:-:0}"
+export GTK_MODULES=gail:atk-bridge
+export QT_ACCESSIBILITY=1
+export NO_AT_BRIDGE=0
+export ACCESSIBILITY_ENABLED=1
+export GNOME_ACCESSIBILITY=1
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export LANGUAGE=pt_BR:pt
+export PYTHONPATH="/opt/win-a11y-shell/orca/src:$PYTHONPATH"
+
+# Iniciar servidor da UI do Windows 11 se não estiver ativo
+if ! pgrep -f "http-server" >/dev/null 2>&1; then
+    npx --yes http-server /opt/win-a11y-shell/ui -p 3000 --cors > /tmp/win_a11y_web.log 2>&1 &
+    sleep 2
+fi
+
+# Detectar navegador
+if command -v chromium >/dev/null 2>&1; then
+    BROWSER_CMD="chromium"
+elif command -v chromium-browser >/dev/null 2>&1; then
+    BROWSER_CMD="chromium-browser"
+elif command -v google-chrome >/dev/null 2>&1; then
+    BROWSER_CMD="google-chrome"
+elif command -v firefox >/dev/null 2>&1; then
+    BROWSER_CMD="firefox"
+else
+    BROWSER_CMD="x-www-browser"
+fi
+
+# Iniciar Chromium em Kiosk Mode com flags de acessibilidade ativas para o Orca
+exec $BROWSER_CMD \
+    --kiosk \
+    --force-renderer-accessibility \
+    --enable-caret-browsing \
+    --no-first-run \
+    --disable-session-crashed-bubble \
+    "http://localhost:3000"

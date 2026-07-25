@@ -62,6 +62,8 @@ fi
 echo "[4/6] Installing Greeter & Daemon Scripts..."
 cp "$SCRIPT_DIR/win-a11y-greeter-setup" /usr/local/bin/win-a11y-greeter-setup
 chmod +x /usr/local/bin/win-a11y-greeter-setup
+cp "$SCRIPT_DIR/win-a11y-shell" /usr/local/bin/win-a11y-shell
+chmod +x /usr/local/bin/win-a11y-shell
 cp "$SCRIPT_DIR/restart.sh" /usr/local/bin/win-a11y-restart
 chmod +x /usr/local/bin/win-a11y-restart
 
