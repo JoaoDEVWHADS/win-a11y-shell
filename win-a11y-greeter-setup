@@ -8,12 +8,13 @@ chmod -R 755 /var/lib/lightdm 2>/dev/null || true
 # Liberar acesso X11 para o usuario lightdm
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
-# Iniciar o Orca explicitamente sob o usuario lightdm se nao estiver rodando
+# Iniciar o Orca explicitamente sob o usuario lightdm apontando para o XAUTHORITY do root
 (
     sleep 2
     if ! pgrep -u lightdm -f orca >/dev/null 2>&1; then
         runuser -u lightdm -- env \
             DISPLAY=:0 \
+            XAUTHORITY=/var/run/lightdm/root/:0 \
             HOME=/var/lib/lightdm \
             PYTHONPATH="/opt/win-a11y-shell/orca/src" \
             LANG=pt_BR.UTF-8 \
