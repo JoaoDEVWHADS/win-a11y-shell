@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# restart.sh — Reinicia o Orca personalizado e a nova interface gráfica do Windows 11
+# restart.sh — Reinicia MATE Desktop + Orca
 set -e
 
-# Modo --greeter: reinicia lightdm
 if [ "${1:-}" = "--greeter" ]; then
     echo "[restart] Modo GREETER — matando processos e reiniciando lightdm..."
     pkill -9 -f "orca"         2>/dev/null || true
-    pkill -9 -f "chromium"     2>/dev/null || true
+    pkill -9 -f "mate-session" 2>/dev/null || true
     pkill -9 -f "lightdm-gtk"  2>/dev/null || true
     sleep 2
     systemctl restart lightdm
@@ -38,11 +37,8 @@ ENV_VARS=(
     "PYTHONPATH=/opt/win-a11y-shell/orca/src:${PYTHONPATH}"
 )
 
-echo "[restart] Parando processos antigos..."
-systemctl stop win-a11y-shell 2>/dev/null || true
-pkill -9 -f "chromium" 2>/dev/null || true
+echo "[restart] Parando Orca antigo..."
 pkill -9 -f "orca" 2>/dev/null || true
-pkill -9 -f "http-server" 2>/dev/null || true
 sleep 1
 
 echo "[restart] Iniciando Orca personalizado..."
@@ -50,33 +46,8 @@ nohup env "${ENV_VARS[@]}" /usr/local/bin/orca --replace > /tmp/win_a11y_orca.lo
 ORCA_PID=$!
 sleep 2
 
-echo "[restart] Servindo e abrindo a interface do Windows 11 em Kiosk Mode..."
-if ! command -v npx >/dev/null 2>&1; then
-    apt-get install -y nodejs npm 2>/dev/null || true
-fi
+echo "[restart] Aplicando tema Fluent-Dark no GTK3..."
+gsettings set org.mate.interface gtk-theme 'Fluent-Dark' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface gtk-theme 'Fluent-Dark' 2>/dev/null || true
 
-# Servir static build em background
-npx --yes http-server /opt/win-a11y-shell/ui -p 3000 --cors > /tmp/win_a11y_web.log 2>&1 &
-sleep 2
-
-# Abrir Chromium em tela cheia (Kiosk Mode) com flags de acessibilidade ativadas para o Orca
-if command -v chromium >/dev/null 2>&1; then
-    BROWSER_CMD="chromium"
-elif command -v chromium-browser >/dev/null 2>&1; then
-    BROWSER_CMD="chromium-browser"
-else
-    BROWSER_CMD="google-chrome"
-fi
-
-nohup env "${ENV_VARS[@]}" $BROWSER_CMD \
-    --no-sandbox \
-    --test-type \
-    --kiosk \
-    --force-renderer-accessibility \
-    --enable-caret-browsing \
-    --no-first-run \
-    --disable-session-crashed-bubble \
-    "http://localhost:3000" > /tmp/win_a11y_ui.log 2>&1 &
-
-UI_PID=$!
-echo "[restart] ✅ Orca PID=$ORCA_PID | Windows 11 UI PID=$UI_PID"
+echo "[restart] ✅ Orca PID=$ORCA_PID | Tema Windows 11 GTK3 Aplicado!"
