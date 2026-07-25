@@ -67,11 +67,16 @@ class WindowsFocusController(Gtk.Window):
 
     def reload_real_desktop(self):
         items = []
-        desktop_dir = os.path.expanduser("~/Desktop")
-        if os.path.exists(desktop_dir):
-            for entry in sorted(os.listdir(desktop_dir)):
-                if not entry.startswith('.'):
-                    items.append((entry, os.path.join(desktop_dir, entry)))
+        desktop_dirs = [
+            os.path.expanduser("~/Área de trabalho"),
+            os.path.expanduser("~/Área de Trabalho"),
+            os.path.expanduser("~/Desktop")
+        ]
+        for d in desktop_dirs:
+            if os.path.exists(d):
+                for entry in sorted(os.listdir(d)):
+                    if not entry.startswith('.'):
+                        items.append((entry, os.path.join(d, entry)))
 
         if not items:
             items = [("Nenhum item na Área de Trabalho", "folder")]
