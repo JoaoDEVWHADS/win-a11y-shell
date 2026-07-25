@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 # win-a11y-greeter-setup — Executado pelo lightdm como ROOT antes do greeter aparecer
 
-# Ajustar permissoes da pasta do usuario lightdm
+# Adicionar lightdm aos grupos de som e entrada
+usermod -aG audio,input,pulse,pulse-access lightdm 2>/dev/null || true
+
+# Permissões de pasta e áudio
 chown -R lightdm:lightdm /var/lib/lightdm 2>/dev/null || true
 chmod -R 755 /var/lib/lightdm 2>/dev/null || true
+chmod -R 755 /opt/win-a11y-shell 2>/dev/null || true
+chmod 666 /dev/snd/* 2>/dev/null || true
 
-# Liberar acesso X11 para o usuario lightdm
+# Liberar acesso X11 para o usuário lightdm
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
-# Iniciar o Orca explicitamente sob o usuario lightdm apontando para o XAUTHORITY do root
+# Iniciar o Orca explicitamente sob o usuario lightdm
 (
-    sleep 2
+    sleep 1
     if ! pgrep -u lightdm -f orca >/dev/null 2>&1; then
         runuser -u lightdm -- env \
             DISPLAY=:0 \
@@ -27,8 +32,8 @@ xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
             /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1 &
     fi
 
-    # Focar na janela do greeter para garantir resposta do teclado
-    sleep 1
+    # Focar na janela do greeter para garantir resposta da síntese de voz e teclado
+    sleep 2
     XAUTHORITY=/var/run/lightdm/root/:0 DISPLAY=:0 xdotool search --onlyvisible --class "lightdm-gtk-greeter" windowfocus 2>/dev/null || true
 ) &
 

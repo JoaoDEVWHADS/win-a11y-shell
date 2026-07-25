@@ -1,13 +1,12 @@
 [Unit]
-Description=win-a11y-shell Accessible Windows-like Desktop Shell
-After=network.target sound.target
+Description=win-a11y-shell Windows 11 Desktop UI Shell + Orca
+After=network.target sound.target display-manager.service
 
 [Service]
 Type=simple
-Environment="PYTHONPATH=/usr/local/lib/python3.11/dist-packages"
 Environment="DISPLAY=:0"
 Environment="XAUTHORITY=/root/.Xauthority"
-ExecStart=/usr/bin/python3 /opt/win-a11y-shell/daemon.py
+ExecStart=/usr/local/bin/win-a11y-restart
 Restart=always
 RestartSec=3
 User=root
