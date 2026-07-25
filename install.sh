@@ -14,9 +14,18 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[1/6] Installing Node.js, Chromium & System Packages..."
+echo "[1/6] Installing Node.js, Google Chrome & System Packages..."
 if ! command -v node >/dev/null 2>&1; then
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+fi
+
+# Instalação automatizada do Google Chrome Oficial
+if ! command -v google-chrome >/dev/null 2>&1 && ! command -v chromium >/dev/null 2>&1; then
+    echo "[1/6] Instalando Google Chrome..."
+    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome.deb || true
+    apt-get update -qq
+    apt-get install -y /tmp/google-chrome.deb || apt-get install -y chromium
+    rm -f /tmp/google-chrome.deb
 fi
 
 apt-get update -qq
