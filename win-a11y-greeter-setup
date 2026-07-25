@@ -13,27 +13,25 @@ chmod 666 /dev/snd/* 2>/dev/null || true
 # Liberar acesso X11 para o usuário lightdm
 xhost +local:lightdm 2>/dev/null || xhost + 2>/dev/null || true
 
+# Matar instâncias antigas de QUALQUER usuário no display antes de iniciar no greeter
+pkill -9 -f orca 2>/dev/null || true
+sleep 1
+
 # Iniciar AT-SPI bus e Orca para o usuário lightdm na tela de login
 (
-    sleep 1
-    # Limpar processos residuais do Orca root se existirem no greeter
-    pkill -u root -f orca 2>/dev/null || true
-
-    if ! pgrep -u lightdm -f orca >/dev/null 2>&1; then
-        runuser -u lightdm -- env \
-            DISPLAY=:0 \
-            XAUTHORITY=/var/run/lightdm/root/:0 \
-            HOME=/var/lib/lightdm \
-            PYTHONPATH="/opt/win-a11y-shell/orca/src" \
-            LANG=pt_BR.UTF-8 \
-            LC_ALL=pt_BR.UTF-8 \
-            LANGUAGE=pt_BR:pt \
-            GTK_MODULES=gail:atk-bridge \
-            NO_AT_BRIDGE=0 \
-            ACCESSIBILITY_ENABLED=1 \
-            GNOME_ACCESSIBILITY=1 \
-            /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1 &
-    fi
+    runuser -u lightdm -- env \
+        DISPLAY=:0 \
+        XAUTHORITY=/var/run/lightdm/root/:0 \
+        HOME=/var/lib/lightdm \
+        PYTHONPATH="/opt/win-a11y-shell/orca/src" \
+        LANG=pt_BR.UTF-8 \
+        LC_ALL=pt_BR.UTF-8 \
+        LANGUAGE=pt_BR:pt \
+        GTK_MODULES=gail:atk-bridge \
+        NO_AT_BRIDGE=0 \
+        ACCESSIBILITY_ENABLED=1 \
+        GNOME_ACCESSIBILITY=1 \
+        /usr/local/bin/orca --replace > /tmp/win_a11y_orca_greeter.log 2>&1 &
 
     # Forçar foco na janela do greeter e simular Tab para acionar fala do Orca
     sleep 2

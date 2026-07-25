@@ -2,6 +2,10 @@
 # win-a11y-shell launcher script — Inicia a sessão nativa do MATE com tema do Windows 11 e Orca
 set -e
 
+# Matar instâncias do greeter ou do root para não conflitar com a sessão do usuário
+pkill -9 -f "orca" 2>/dev/null || true
+sleep 1
+
 # Corrigir XDG_RUNTIME_DIR e DBUS para o usuário da sessão (evitar /run/user/0 do root)
 USER_UID=$(id -u)
 export XDG_RUNTIME_DIR="/run/user/${USER_UID}"
@@ -27,8 +31,6 @@ gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null
 gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true 2>/dev/null || true
 
 # Iniciar Orca personalizado do usuário logado
-pkill -u "$USER_UID" -f "orca" 2>/dev/null || true
-sleep 1
 nohup env PYTHONPATH="/opt/win-a11y-shell/orca/src" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" /usr/local/bin/orca --replace > /tmp/win_a11y_orca.log 2>&1 &
 
 # Executar a sessão do MATE Desktop (MATE Panel + Marco)
