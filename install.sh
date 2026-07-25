@@ -248,8 +248,9 @@ export LC_ALL=pt_BR.UTF-8
 export LANGUAGE=pt_BR:pt
 export PYTHONPATH="/opt/win-a11y-shell/orca/src:$PYTHONPATH"
 
-# Limpar bus de acessibilidade antigo do greeter (lightdm/105) se tiver herdado
+# Limpar referencias ao bus de acessibilidade antigo do root ou lightdm
 unset AT_SPI_BUS_ADDRESS
+export AT_SPI_BUS_ADDRESS="unix:path=/run/user/$(id -u)/at-spi/bus_0"
 
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax --exit-with-session)
